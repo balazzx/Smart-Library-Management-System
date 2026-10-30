@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Digital Library & E-Resources - Smart Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="mb-4">
+        <h3 class="fw-bold mb-1 text-navy"><i class="fa-solid fa-file-pdf text-danger me-2"></i>Digital Library & E-Resources</h3>
+        <p class="text-muted mb-0">Access course lecture notes, reference PDFs, research papers, and technical cheat sheets</p>
+    </div>
+
+    <div class="row g-4">
+        {% for res in resources %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card card-custom h-100 p-4 shadow-sm border-0">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-danger font-monospace"><i class="fa-solid fa-file-pdf me-1"></i>{{ res.file_type }}</span>
+                        <span class="badge bg-light text-dark font-monospace">{{ res.formatted_size }}</span>
+                    </div>
+                    <h5 class="fw-bold text-navy line-clamp-2 mb-1">{{ res.title }}</h5>
+                    <p class="text-muted small mb-2"><i class="fa-solid fa-user me-1"></i> Author: {{ res.author or 'Faculty' }}</p>
+                    <p class="text-secondary small mb-3 leading-relaxed">{{ res.description }}</p>
+
+                    <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
+                        <span class="text-muted small" style="font-size: 0.75rem;">Uploaded: {{ res.upload_date.strftime('%Y-%m-%d') }}</span>
+                        <a href="{{ url_for('static', filename=res.file_path) }}" class="btn btn-sm btn-outline-primary fw-semibold rounded-2" target="_blank" download>
+                            <i class="fa-solid fa-download me-1"></i> Download File
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12 text-center py-5 text-muted">
+                <i class="fa-solid fa-cloud-arrow-up fs-1 text-secondary mb-2"></i>
+                <p class="mb-0">No digital resources currently uploaded for your department.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications Center - Smart Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h3 class="fw-bold mb-3 text-navy"><i class="fa-regular fa-bell text-primary me-2"></i>Notification Center</h3>
+
+    <div class="card card-custom p-4 shadow-sm border-0">
+        {% if notifications %}
+            <div class="list-group list-group-flush">
+                {% for n in notifications %}
+                    <div class="list-group-item p-3 mb-2 rounded-3 border-0 {% if not n.is_read %}bg-light border-start border-4 border-primary{% else %}bg-white border{% endif %}">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h6 class="fw-bold mb-0 text-navy">{{ n.title }}</h6>
+                            <span class="text-muted small font-monospace">{{ n.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        </div>
+                        <p class="text-secondary small mb-2">{{ n.message }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-secondary font-monospace" style="font-size: 0.7rem;">{{ n.category }}</span>
+                            {% if not n.is_read %}
+                                <a href="{{ url_for('student.mark_notification_read', notif_id=n.id) }}" class="btn btn-sm btn-outline-primary py-0 rounded-pill">Mark Read</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="fa-regular fa-bell-slash fs-1 text-secondary mb-2"></i>
+                <p class="mb-0">You have no notifications.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

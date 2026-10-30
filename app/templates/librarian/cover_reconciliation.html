@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Cover Reconciliation Report — KIOT Central Library{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-3">
+  <div class="d-flex align-items-center mb-4">
+    <a href="{{ url_for('librarian.cover_management') }}" class="btn btn-outline-secondary btn-sm rounded-pill me-3">
+      <i class="fa-solid fa-arrow-left me-1"></i>Back
+    </a>
+    <h4 class="fw-bold mb-0 text-navy"><i class="fa-solid fa-chart-bar text-primary me-2"></i>Cover Reconciliation Report</h4>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+        <div class="fs-2 fw-bold text-primary">{{ report.total_catalog_isbns }}</div>
+        <div class="small text-muted">Catalog Books</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+        <div class="fs-2 fw-bold text-info">{{ report.total_cover_files }}</div>
+        <div class="small text-muted">Local Cover Files</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+        <div class="fs-2 fw-bold text-success">{{ report.verified_isbn_matches }}</div>
+        <div class="small text-muted">Verified ISBN Matches</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+        <div class="fs-2 fw-bold text-danger">{{ report.missing_count }}</div>
+        <div class="small text-muted">Missing Covers</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+        <div class="fs-4 fw-bold text-warning">{{ report.unmatched_in_covers_dir|length }}</div>
+        <div class="small text-muted">Unmatched Files in book_covers/</div>
+        {% if report.unmatched_in_covers_dir %}
+        <div class="mt-2">
+          {% for f in report.unmatched_in_covers_dir[:10] %}
+          <code class="badge bg-light text-dark border me-1" style="font-size:.75rem">{{ f }}</code>
+          {% endfor %}
+          {% if report.unmatched_in_covers_dir|length > 10 %}
+          <span class="small text-muted">... and {{ report.unmatched_in_covers_dir|length - 10 }} more</span>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+        <div class="fs-4 fw-bold text-warning">{{ report.unmatched_preserved_count }}</div>
+        <div class="small text-muted">Files in Unmatched/ (for manual review)</div>
+      </div>
+    </div>
+  </div>
+
+  {% if report.missing_covers %}
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-header bg-danger bg-opacity-10 border-0 rounded-top-4">
+      <h6 class="mb-0 text-danger fw-semibold">
+        <i class="fa-solid fa-circle-xmark me-2"></i>Books Missing Covers ({{ report.missing_count }})
+      </h6>
+    </div>
+    <div class="card-body">
+      <div class="d-flex flex-wrap gap-2">
+        {% for isbn in report.missing_covers %}
+        <code class="badge bg-light text-dark border" style="font-size:.8rem">{{ isbn }}</code>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="text-center text-muted py-5">
+    <i class="fa-solid fa-circle-check fa-3x text-success mb-3 d-block"></i>
+    <h5 class="fw-semibold">All catalog books have local cover images!</h5>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

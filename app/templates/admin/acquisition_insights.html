@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Acquisition Insights - Smart Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="mb-4">
+        <h3 class="fw-bold mb-1 text-navy"><i class="fa-solid fa-lightbulb text-warning me-2"></i>Smart Acquisition & Inventory Insights</h3>
+        <p class="text-muted mb-0">Data-driven recommendations for purchasing additional book copies based on high demand and low stock</p>
+    </div>
+
+    <div class="row g-4">
+        {% for item in insights %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card card-custom h-100 p-4 shadow-sm border-0 border-top border-4 border-warning">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-danger font-monospace">HIGH DEMAND</span>
+                        <span class="badge bg-light text-dark font-monospace">Available: {{ item.available_copies }}</span>
+                    </div>
+                    <h5 class="fw-bold text-navy line-clamp-2 mb-2">{{ item.book.title }}</h5>
+                    <p class="text-muted small mb-2"><i class="fa-solid fa-user me-1"></i> {{ item.book.author.name }}</p>
+
+                    <div class="p-3 bg-light rounded-3 my-3">
+                        <div class="small text-muted mb-1">Recommended Purchase</div>
+                        <div class="fs-4 fw-bold text-success">+{{ item.recommended_additional_copies }} Additional Copies</div>
+                    </div>
+
+                    <p class="text-secondary small mb-0"><i class="fa-solid fa-circle-info text-primary me-1"></i>{{ item.reason }}</p>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12 text-center py-5 text-muted">
+                <i class="fa-solid fa-circle-check fs-1 text-success mb-2"></i>
+                <p class="mb-0">All high-demand book categories currently maintain adequate physical copy levels.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

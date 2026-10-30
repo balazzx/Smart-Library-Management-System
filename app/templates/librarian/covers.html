@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}Cover Management — KIOT Central Library{% endblock %}
+
+{% block extra_css %}
+<style>
+.cover-thumb {
+    width: 60px;
+    height: 80px;
+    object-fit: contain;
+    border-radius: 4px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+.status-badge-covered { background: #198754; color: #fff; }
+.status-badge-missing  { background: #dc3545; color: #fff; }
+.cover-card { transition: box-shadow .2s; }
+.cover-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.12); }
+.upload-zone {
+    border: 2px dashed #6c757d;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    font-size: .8rem;
+    color: #6c757d;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+}
+.upload-zone:hover { border-color: #0d6efd; background: #f0f6ff; color: #0d6efd; }
+.tab-pane { padding-top: 1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="fw-bold mb-1 text-navy">
+        <i class="fa-solid fa-image text-primary me-2"></i>Book Cover Management
+      </h4>
+      <p class="text-muted small mb-0">
+        Upload, replace, delete, and reconcile book covers. Unmatched files are preserved for manual review.
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('librarian.zip_cover_upload') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+        <i class="fa-solid fa-file-zipper me-1"></i>Bulk ZIP Upload
+      </a>
+      <a href="{{ url_for('librarian.cover_reconciliation') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+        <i class="fa-solid fa-chart-bar me-1"></i>Reconciliation Report
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Badges -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+        <div class="fs-2 fw-bold text-primary">{{ total }}</div>
+        <div class="small text-muted">Total Books</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+        <div class="fs-2 fw-bold text-success">{{ covered_count }}</div>
+        <div class="small text-muted">With Covers</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+        <div class="fs-2 fw-bold text-danger">{{ missing_count }}</div>
+        <div class="small text-muted">Missing Covers</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+        <div class="fs-2 fw-bold text-warning">{{ unmatched_files|length }}</div>
+        <div class="small text-muted">Unmatched Files</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-3" id="coverTabs">
+    <li class="nav-item">
+      <a class="nav-link {% if filter_status != 'unmatched' %}active{% endif %}"
+         href="{{ url_for('librarian.cover_management', status='all', q=q) }}">
+        <i class="fa-solid fa-list me-1"></i>All Books
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link"
+         href="{{ url_for('librarian.cover_management', status='missing', q=q) }}">
+        <i class="fa-solid fa-circle-xmark me-1 text-danger"></i>Missing ({{ missing_count }})
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link"
+         href="{{ url_for('librarian.cover_management', status='covered', q=q) }}">
+        <i class="fa-solid fa-circle-check me-1 text-success"></i>Covered ({{ covered_count }})
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if filter_status == 'unmatched' %}active{% endif %}"
+         href="#unmatched-tab" data-bs-toggle="tab">
+        <i class="fa-solid fa-triangle-exclamation me-1 text-warning"></i>
+        Unmatched Files ({{ unmatched_files|length }})
+      </a>
+    </li>
+  </ul>
+
+  <!-- Search Row -->
+  <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
+    <form method="GET" class="d-flex gap-2">
+      <input type="hidden" name="status" value="{{ filter_status }}">
+      <input type="text" name="q" class="form-control rounded-3"
+             placeholder="Search by title, ISBN, or author..." value="{{ q }}" style="max-width:400px">
+      <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">
+        <i class="fa-solid fa-magnifying-glass me-1"></i>Search
+      </button>
+      {% if q %}
+      <a href="{{ url_for('librarian.cover_management', status=filter_status) }}"
+         class="btn btn-outline-secondary rounded-pill px-3">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="tab-content">
+    <!-- Books Table Tab -->
+    <div class="tab-pane fade show active" id="books-tab">
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="covers-table">
+              <thead class="table-light small">
+                <tr>
+                  <th style="width:70px">Cover</th>
+                  <th>Title</th>
+                  <th>ISBN</th>
+                  <th>Author</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for entry in book_entries %}
+                <tr>
+                  <td>
+                    <img src="{{ url_for('static', filename=entry.cover_rel) }}"
+                         class="cover-thumb"
+                         alt="Cover for {{ entry.book.title }}"
+                         onerror="this.src='{{ url_for('static', filename='default_cover.jpg') }}'">
+                  </td>
+                  <td class="fw-semibold small">{{ entry.book.title }}</td>
+                  <td><code class="small">{{ entry.isbn or entry.book.isbn }}</code></td>
+                  <td class="small text-muted">{{ entry.book.author.name if entry.book.author else '-' }}</td>
+                  <td>
+                    <span class="badge rounded-pill status-badge-{{ 'covered' if entry.has_cover else 'missing' }}">
+                      {% if entry.has_cover %}
+                        <i class="fa-solid fa-circle-check me-1"></i>COVERED
+                      {% else %}
+                        <i class="fa-solid fa-circle-xmark me-1"></i>MISSING
+                      {% endif %}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="d-flex gap-1 align-items-center flex-wrap">
+                      <!-- Upload/Replace form -->
+                      <form action="{{ url_for('librarian.upload_cover', book_id=entry.book.id) }}"
+                            method="POST" enctype="multipart/form-data"
+                            class="d-inline-flex align-items-center gap-1"
+                            id="upload-form-{{ entry.book.id }}">
+                        <input type="hidden" name="q" value="{{ q }}">
+                        <label class="upload-zone mb-0 px-2 py-1"
+                               for="cover_input_{{ entry.book.id }}"
+                               style="font-size:.75rem; min-width:90px">
+                          <i class="fa-solid fa-upload me-1"></i>
+                          {% if entry.has_cover %}Replace{% else %}Upload{% endif %}
+                        </label>
+                        <input type="file" name="cover_image" id="cover_input_{{ entry.book.id }}"
+                               accept=".jpg,.jpeg,.png,.webp" class="d-none"
+                               onchange="document.getElementById('upload-form-{{ entry.book.id }}').submit()">
+                      </form>
+
+                      {% if entry.has_cover %}
+                      <!-- Delete form -->
+                      <form action="{{ url_for('librarian.delete_cover', book_id=entry.book.id) }}"
+                            method="POST" class="d-inline"
+                            onsubmit="return confirm('Remove cover for \'{{ entry.book.title }}\'?')">
+                        <input type="hidden" name="q" value="{{ q }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-0"
+                                style="font-size:.75rem" title="Remove cover">
+                          <i class="fa-solid fa-trash"></i>
+                        </button>
+                      </form>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td colspan="6" class="text-center text-muted py-5">
+                    <i class="fa-solid fa-box-open fa-2x mb-2 d-block"></i>
+                    No books found{% if q %} matching "{{ q }}"{% endif %}.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      {% if total_pages > 1 %}
+      <nav class="mt-3">
+        <ul class="pagination pagination-sm justify-content-center">
+          {% for p in range(1, total_pages + 1) %}
+          <li class="page-item {% if p == page %}active{% endif %}">
+            <a class="page-link"
+               href="{{ url_for('librarian.cover_management', page=p, status=filter_status, q=q) }}">{{ p }}</a>
+          </li>
+          {% endfor %}
+        </ul>
+      </nav>
+      {% endif %}
+    </div>
+
+    <!-- Unmatched Files Tab -->
+    <div class="tab-pane fade" id="unmatched-tab">
+      {% if unmatched_files %}
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-header bg-warning bg-opacity-10 border-0">
+          <h6 class="mb-0 fw-semibold">
+            <i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>
+            Unmatched Cover Images ({{ unmatched_files|length }})
+          </h6>
+          <p class="small text-muted mb-0 mt-1">
+            These images have been preserved here because their filename did not match any catalog ISBN.
+            You can manually map them to a book below.
+          </p>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light small">
+                <tr>
+                  <th style="width:70px">Preview</th>
+                  <th>Filename</th>
+                  <th>Manual Map to ISBN</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for fname in unmatched_files %}
+                <tr>
+                  <td>
+                    <img src="{{ url_for('static', filename='book_covers/unmatched/' + fname) }}"
+                         class="cover-thumb"
+                         alt="{{ fname }}"
+                         onerror="this.src='{{ url_for('static', filename='default_cover.jpg') }}'">
+                  </td>
+                  <td><code class="small">{{ fname }}</code></td>
+                  <td>
+                    <form action="{{ url_for('librarian.manual_cover_map') }}"
+                          method="POST" class="d-flex gap-2 align-items-center">
+                      <input type="hidden" name="filename" value="{{ fname }}">
+                      <input type="text" name="isbn" class="form-control form-control-sm rounded-3"
+                             placeholder="Enter catalog ISBN..." style="max-width:180px" required>
+                      <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold"
+                              onclick="return confirm('Map this image to the ISBN entered?')">
+                        <i class="fa-solid fa-link me-1"></i>Map
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="text-center text-muted py-5">
+        <i class="fa-solid fa-circle-check fa-3x text-success mb-3 d-block"></i>
+        <h5 class="fw-semibold">No unmatched files</h5>
+        <p class="small">All uploaded cover images have been matched to catalog ISBNs or are awaiting a ZIP upload.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

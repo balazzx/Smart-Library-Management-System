@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}Digital Student ID Card — KIOT Central Library{% endblock %}
+
+{% block content %}
+<style>
+.card-perspective {
+    perspective: 1000px;
+}
+.id-card-wrapper {
+    width: 480px;
+    height: 300px;
+    position: relative;
+    transition: transform 0.8s cubic-bezier(0.4, 0.2, 0.2, 1);
+    transform-style: preserve-3d;
+}
+.id-card-wrapper.flipped {
+    transform: rotateY(180deg);
+}
+.id-card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(11, 25, 44, 0.35);
+}
+.id-card-front {
+    background: linear-gradient(135deg, #0b192c 0%, #1e3e62 60%, #000000 100%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}
+.id-card-back {
+    background: linear-gradient(135deg, #1e3e62 0%, #0b192c 100%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    transform: rotateY(180deg);
+}
+.card-header-stripe {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+.gold-chip {
+    width: 42px;
+    height: 32px;
+    background: linear-gradient(135deg, #ffe066 0%, #d4af37 50%, #996515 100%);
+    border-radius: 6px;
+    border: 1px solid #ffea80;
+    box-shadow: inset 0 0 4px rgba(0,0,0,0.4);
+}
+@media print {
+    body * { visibility: hidden; }
+    #printableCardArea, #printableCardArea * { visibility: visible; }
+    #printableCardArea { position: absolute; left: 0; top: 0; width: 100%; }
+    .no-print { display: none !important; }
+    .id-card-wrapper.flipped { transform: rotateY(0deg) !important; }
+    .id-card-back { position: relative !important; transform: none !important; margin-top: 20px; }
+}
+</style>
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <div>
+            <h3 class="fw-bold mb-1 text-navy"><i class="fa-solid fa-id-card text-primary me-2"></i>Digital Student Library Card</h3>
+            <p class="text-muted mb-0">Knowledge Institute of Technology (KIOT), Salem — Official Smart Identification</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button onclick="toggleCardFlip()" class="btn btn-outline-primary rounded-pill shadow-sm">
+                <i class="fa-solid fa-rotate-left me-1"></i> Flip Card (Front / Back)
+            </button>
+            <button onclick="window.print()" class="btn btn-primary rounded-pill shadow-sm">
+                <i class="fa-solid fa-print me-2"></i> Print ID Card
+            </button>
+        </div>
+    </div>
+
+    <div class="row justify-content-center my-4" id="printableCardArea">
+        <div class="col-auto card-perspective">
+            <div id="idCardWrapper" class="id-card-wrapper">
+                
+                <!-- FRONT SIDE -->
+                <div class="id-card-face id-card-front p-3 d-flex flex-column justify-content-between">
+                    <div>
+                        <!-- Header -->
+                        <div class="d-flex justify-content-between align-items-center pb-2 border-bottom border-light border-opacity-25">
+                            <div class="d-flex align-items-center gap-2">
+                                <img src="{{ url_for('static', filename='uploads/kiot_logo.jpg') }}" alt="KIOT Logo" style="height: 38px; border-radius: 4px;" class="bg-white p-1">
+                                <div>
+                                    <div class="fw-bold fs-6 tracking-wide text-uppercase text-warning" style="line-height: 1.1;">KIOT CENTRAL LIBRARY</div>
+                                    <small class="text-white-50 font-monospace" style="font-size: 0.7rem;">KNOWLEDGE INSTITUTE OF TECHNOLOGY</small>
+                                </div>
+                            </div>
+                            <div class="gold-chip"></div>
+                        </div>
+
+                        <!-- Main Details -->
+                        <div class="row align-items-center mt-3">
+                            <div class="col-8">
+                                <h5 class="fw-bold mb-1 text-white text-truncate">{{ student.name }}</h5>
+                                <div class="badge bg-primary bg-opacity-75 text-white mb-2" style="font-size: 0.75rem;">
+                                    {{ student.department.code if student.department else 'STUDENT' }} — {{ student.department.name if student.department else 'KIOT' }}
+                                </div>
+                                <div class="font-monospace small text-light mb-1">
+                                    Roll No: <strong class="text-warning">{{ student.student_id }}</strong>
+                                </div>
+                                {% if student.reg_no %}
+                                <div class="font-monospace small text-light mb-1">
+                                    Reg No: <strong class="text-info">{{ student.reg_no }}</strong>
+                                </div>
+                                {% endif %}
+                                <div class="font-monospace text-success mt-2" style="font-size: 0.8rem;">
+                                    CARD NO: <strong>{{ student.library_card_number }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div class="bg-white p-2 rounded-3 shadow-sm d-inline-block">
+                                    <img src="{{ url_for('static', filename=qr_url) }}" style="width: 85px; height: 85px;" alt="Library Card QR">
+                                </div>
+                                <div class="text-center mt-1" style="font-size: 0.65rem; color: #cbd5e1;">SCAN FOR RESOLUTION</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="d-flex justify-content-between align-items-center pt-2 border-top border-light border-opacity-25" style="font-size: 0.75rem;">
+                        <span class="text-white-50">LIMIT: <strong class="text-warning">{{ student.max_borrow_limit }} BOOKS</strong></span>
+                        <span class="badge bg-success bg-opacity-50 text-white font-monospace">STATUS: ACTIVE</span>
+                        <span class="text-white-50">VALID: <strong class="text-info">DEC 2027</strong></span>
+                    </div>
+                </div>
+
+                <!-- BACK SIDE -->
+                <div class="id-card-face id-card-back p-3 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center pb-2 border-bottom border-light border-opacity-25">
+                            <span class="fw-bold text-uppercase text-warning" style="font-size: 0.8rem;"><i class="fa-solid fa-shield-halved me-1"></i>TERMS & RULES OF USE</span>
+                            <span class="text-white-50 font-monospace" style="font-size: 0.7rem;">SALEM - 637 504</span>
+                        </div>
+
+                        <ul class="mt-2 mb-0 px-3 text-light" style="font-size: 0.72rem; line-height: 1.4;">
+                            <li>This card is non-transferable and must be produced upon entering KIOT Central Library.</li>
+                            <li>Maximum borrow limit: <strong>{{ student.max_borrow_limit }} Books</strong>. Standard borrow duration: <strong>14 Days</strong>.</li>
+                            <li>Overdue books incur a fine of <strong>₹1.00 per day per book</strong>.</li>
+                            <li>Loss of card or book must be reported immediately to the Chief Librarian.</li>
+                            <li>Keep card away from direct heat and magnetic fields.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <div class="d-flex justify-content-between align-items-end pt-2 border-top border-light border-opacity-25">
+                            <div>
+                                <small class="text-white-50 d-block" style="font-size: 0.65rem;">HELP & INQUIRIES</small>
+                                <span class="font-monospace text-info" style="font-size: 0.7rem;"><i class="fa-solid fa-envelope me-1"></i>library@kiot.ac.in</span>
+                            </div>
+                            <div class="text-end">
+                                <div class="font-monospace text-warning fst-italic" style="font-size: 0.75rem; border-bottom: 1px dashed rgba(255,255,255,0.4); padding-bottom: 2px;">
+                                    Dr. S. Chief Librarian
+                                </div>
+                                <small class="text-white-50 d-block mt-1" style="font-size: 0.6rem;">AUTHORIZED SIGNATURE</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions / Information -->
+    <div class="row justify-content-center mt-4 no-print">
+        <div class="col-md-8">
+            <div class="card card-custom p-4 border-0 shadow-sm">
+                <h5 class="fw-bold text-navy mb-3"><i class="fa-solid fa-circle-info me-2 text-primary"></i>About Your Digital Student Library Card</h5>
+                <div class="row g-3 small">
+                    <div class="col-md-6">
+                        <div class="d-flex gap-2">
+                            <i class="fa-solid fa-qrcode text-success fs-5 mt-1"></i>
+                            <div>
+                                <strong>Instant Scanner Resolution</strong>
+                                <p class="text-muted mb-0">Librarians can scan your card QR code at circulation desks to instantly fetch your active issues, dues, and eligibility.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex gap-2">
+                            <i class="fa-solid fa-print text-primary fs-5 mt-1"></i>
+                            <div>
+                                <strong>High-Definition Printing</strong>
+                                <p class="text-muted mb-0">Use the Print button above to output card dimensions directly formatted for CR80 PVC card printing or standard paper.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleCardFlip() {
+    document.getElementById('idCardWrapper').classList.toggle('flipped');
+}
+</script>
+{% endblock %}
+

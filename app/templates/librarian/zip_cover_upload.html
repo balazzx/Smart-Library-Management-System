@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Bulk ZIP Cover Upload — KIOT Central Library{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-3">
+  <div class="d-flex align-items-center mb-4">
+    <a href="{{ url_for('librarian.cover_management') }}" class="btn btn-outline-secondary btn-sm rounded-pill me-3">
+      <i class="fa-solid fa-arrow-left me-1"></i>Back
+    </a>
+    <div>
+      <h4 class="fw-bold mb-1 text-navy"><i class="fa-solid fa-file-zipper text-primary me-2"></i>Bulk ZIP Cover Upload</h4>
+      <p class="text-muted small mb-0">Upload a ZIP archive of cover images named by ISBN (e.g. 9780070087705.jpg). Unmatched images are preserved for manual review.</p>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-md-7">
+      <div class="card border-0 shadow-sm rounded-4 p-4">
+        <form action="{{ url_for('librarian.zip_cover_upload') }}" method="POST" enctype="multipart/form-data">
+          <div class="mb-4 text-center" style="border: 2px dashed #dee2e6; border-radius: 12px; padding: 2rem; background: #f8f9fa;">
+            <i class="fa-solid fa-file-zipper fa-3x text-primary mb-3 d-block"></i>
+            <label for="cover_zip" class="form-label fw-semibold">Select a .zip file</label>
+            <input type="file" name="cover_zip" id="cover_zip" class="form-control mt-2" accept=".zip" required>
+          </div>
+          <div class="alert alert-info small mb-3">
+            <i class="fa-solid fa-circle-info me-2"></i>
+            <strong>Expected format:</strong> Each image filename should be exactly the 13-digit ISBN (e.g. <code>9780070087705.jpg</code>).
+            Images with unrecognised filenames will be moved to <code>book_covers/unmatched/</code> for manual review.
+            Existing verified covers will <em>not</em> be overwritten.
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold flex-grow-1">
+              <i class="fa-solid fa-upload me-2"></i>Upload & Process ZIP
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

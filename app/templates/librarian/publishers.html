@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Publishers Management - Smart Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h4 class="fw-bold mb-1"><i class="fa-solid fa-building text-primary me-2"></i>Publishers Management</h4>
+            <p class="text-muted small mb-0">View registered publishing houses and add new entries</p>
+        </div>
+        <button class="btn btn-primary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#addPublisherModal">
+            <i class="fa-solid fa-plus me-1"></i> Add Publisher
+        </button>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light fs-7">
+                        <tr>
+                            <th>Publisher Name</th>
+                            <th>Total Books Published</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in publishers %}
+                            <tr>
+                                <td class="fw-bold text-dark">{{ p.name }}</td>
+                                <td><span class="badge bg-primary rounded-pill px-3">{{ p.books.count() }} Books</span></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Publisher Modal -->
+<div class="modal fade" id="addPublisherModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom py-3">
+                <h6 class="modal-title fw-bold"><i class="fa-solid fa-plus text-primary me-2"></i>Add New Publisher</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('librarian.publishers') }}" method="POST">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Publisher Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control rounded-3" placeholder="e.g. O'Reilly Media" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-top py-2">
+                    <button type="button" class="btn btn-light btn-sm rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3">Save Publisher</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

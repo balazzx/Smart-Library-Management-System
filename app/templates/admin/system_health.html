@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}System Health — KIOT Central Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1 text-navy"><i class="fa-solid fa-heart-pulse text-danger me-2"></i>System Health Center</h3>
+            <p class="text-muted mb-0">KIOT Central Library — Real-time system status, dataset integrity, and database backup</p>
+        </div>
+        <div class="d-flex gap-2">
+            <form method="POST" action="{{ url_for('admin.create_backup') }}" onsubmit="return confirm('Create a database backup now?')">
+                <button type="submit" class="btn btn-primary rounded-pill shadow-sm">
+                    <i class="fa-solid fa-database me-1"></i> Create Backup Now
+                </button>
+            </form>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary rounded-pill">
+                <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Core System Status -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card card-custom p-4 border-0 shadow-sm h-100">
+                <div class="d-flex align-items-center mb-3">
+                    {% if db_ok %}
+                        <span class="badge bg-success fs-6 me-3 p-2"><i class="fa-solid fa-circle-check"></i></span>
+                    {% else %}
+                        <span class="badge bg-danger fs-6 me-3 p-2"><i class="fa-solid fa-circle-xmark"></i></span>
+                    {% endif %}
+                    <div>
+                        <div class="fw-bold">Database</div>
+                        <small class="text-muted">SQLite Connection</small>
+                    </div>
+                </div>
+                <div class="small">
+                    <div class="d-flex justify-content-between"><span>Status:</span> <span class="fw-bold {{ 'text-success' if db_ok else 'text-danger' }}">{{ 'Healthy' if db_ok else 'Error' }}</span></div>
+                    <div class="d-flex justify-content-between"><span>Students:</span> <span class="fw-bold">{{ db_stats.students }}</span></div>
+                    <div class="d-flex justify-content-between"><span>Books:</span> <span class="fw-bold">{{ db_stats.books }}</span></div>
+                    <div class="d-flex justify-content-between"><span>Copies:</span> <span class="fw-bold">{{ db_stats.copies }}</span></div>
+                    <div class="d-flex justify-content-between"><span>Transactions:</span> <span class="fw-bold">{{ db_stats.transactions }}</span></div>
+                    <div class="d-flex justify-content-between"><span>Locations:</span> <span class="fw-bold">{{ db_stats.locations }}</span></div>
+                    <div class="d-flex justify-content-between"><span>Unpaid Fines:</span> <span class="fw-bold text-warning">{{ db_stats.unpaid_fines }}</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-custom p-4 border-0 shadow-sm h-100">
+                <div class="d-flex align-items-center mb-3">
+                    {% if mail_ok %}
+                        <span class="badge bg-success fs-6 me-3 p-2"><i class="fa-solid fa-circle-check"></i></span>
+                    {% else %}
+                        <span class="badge bg-warning fs-6 me-3 p-2"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                    {% endif %}
+                    <div>
+                        <div class="fw-bold">Email / SMTP</div>
+                        <small class="text-muted">Mail service status</small>
+                    </div>
+                </div>
+                <div class="small">
+                    <div class="d-flex justify-content-between"><span>Status:</span> <span class="fw-bold {{ 'text-success' if mail_ok else 'text-warning' }}">{{ 'Configured' if mail_ok else 'Not Configured' }}</span></div>
+                    <div class="d-flex justify-content-between"><span>Server:</span> <span class="fw-bold">{{ mail_server or '— not set —' }}</span></div>
+                    {% if not mail_ok %}
+                    <div class="mt-2 alert alert-warning py-1 small">Set MAIL_SERVER in .env file to enable email.</div>
+                    {% endif %}
+                    <div class="mt-2">
+                        <a href="{{ url_for('admin.email_center') }}" class="btn btn-sm btn-outline-primary rounded-pill">Configure Email</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-custom p-4 border-0 shadow-sm h-100">
+                <div class="d-flex align-items-center mb-3">
+                    {% if logo_ok %}
+                        <span class="badge bg-success fs-6 me-3 p-2"><i class="fa-solid fa-circle-check"></i></span>
+                    {% else %}
+                        <span class="badge bg-warning fs-6 me-3 p-2"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                    {% endif %}
+                    <div>
+                        <div class="fw-bold">KIOT Logo</div>
+                        <small class="text-muted">Official logo asset</small>
+                    </div>
+                </div>
+                <div class="small">
+                    <div class="d-flex justify-content-between"><span>Status:</span> <span class="fw-bold {{ 'text-success' if logo_ok else 'text-warning' }}">{{ 'Present' if logo_ok else 'Missing' }}</span></div>
+                    {% if logo_ok %}
+                    <div class="mt-2">
+                        <img src="{{ url_for('static', filename='uploads/kiot_logo.jpg') }}" alt="KIOT Logo" style="max-height:40px; border-radius: 6px;">
+                    </div>
+                    {% else %}
+                    <div class="mt-2 alert alert-warning py-1 small">Copy kiot_logo.jpg from Datas/ to app/static/uploads/</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dataset Files Status -->
+    <div class="card card-custom p-4 border-0 shadow-sm mb-4">
+        <h5 class="fw-bold text-navy mb-3"><i class="fa-solid fa-file-excel me-2 text-success"></i>Authoritative Dataset Files — Datas/</h5>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>File</th>
+                        <th>Status</th>
+                        <th>Size</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in dataset_status %}
+                    <tr>
+                        <td class="font-monospace fw-semibold">{{ f.name }}</td>
+                        <td>
+                            {% if f.exists %}
+                                <span class="badge bg-success">Found</span>
+                            {% else %}
+                                <span class="badge bg-danger">Missing</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">{{ f.size_kb }} KB</td>
+                        <td class="small text-muted">{{ 'Authoritative — do not delete' if f.exists else 'Required for re-import' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Data Verification -->
+    <div class="card card-custom p-4 border-0 shadow-sm mb-4">
+        <h5 class="fw-bold text-navy mb-3"><i class="fa-solid fa-shield-halved me-2 text-primary"></i>Database Integrity Verification</h5>
+        <div class="row g-3">
+            {% set expected = {'Students': (66, db_stats.students), 'Books': (500, db_stats.books), 'Book Copies': (500, db_stats.copies), 'Locations': (360, db_stats.locations)} %}
+            {% for label, (exp, actual) in expected.items() %}
+            <div class="col-md-3">
+                <div class="card p-3 border {% if actual == exp %}border-success{% elif actual > 0 %}border-warning{% else %}border-danger{% endif %} rounded-3 text-center">
+                    <div class="fw-bold fs-4 {% if actual == exp %}text-success{% elif actual > 0 %}text-warning{% else %}text-danger{% endif %}">{{ actual }}</div>
+                    <div class="small fw-semibold">{{ label }}</div>
+                    <div class="small text-muted">Expected: {{ exp }}</div>
+                    {% if actual == exp %}
+                        <span class="badge bg-success mt-1">PASS</span>
+                    {% elif actual > 0 %}
+                        <span class="badge bg-warning text-dark mt-1">CHECK</span>
+                    {% else %}
+                        <span class="badge bg-danger mt-1">FAIL</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- System Info -->
+    <div class="card card-custom p-4 border-0 shadow-sm">
+        <h5 class="fw-bold text-navy mb-3"><i class="fa-solid fa-info-circle me-2 text-info"></i>System Information</h5>
+        <div class="row g-3 small">
+            <div class="col-md-6">
+                <table class="table table-sm">
+                    <tr><th>Application</th><td>KIOT Central Library — Smart Library Management System</td></tr>
+                    <tr><th>Institution</th><td>Knowledge Institute of Technology, Salem</td></tr>
+                    <tr><th>Database</th><td>SQLite (smart_library.db)</td></tr>
+                    <tr><th>Framework</th><td>Python Flask + SQLAlchemy</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-sm">
+                    <tr><th>Admin Login</th><td><code>kiot.admin</code> / <code>KIOT@Admin2024</code></td></tr>
+                    <tr><th>Librarian Login</th><td><code>kiot.librarian</code> / <code>KIOT@Library2024</code></td></tr>
+                    <tr><th>Student Login</th><td>Roll No. / Roll No.</td></tr>
+                    <tr><th>Checked At</th><td>{{ now.strftime('%Y-%m-%d %H:%M UTC') }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

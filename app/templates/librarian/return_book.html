@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Return Book - KIOT Central Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card card-custom p-4 shadow-sm border-0 rounded-4 mb-4">
+                <h4 class="fw-bold text-navy mb-3"><i class="fa-solid fa-rotate-left text-success me-2"></i>Book Return Processing Terminal</h4>
+
+                <!-- QR Scanner Quick Input -->
+                <div class="p-3 bg-light rounded-3 mb-4 border">
+                    <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-navy mb-2">
+                        <i class="fa-solid fa-qrcode text-success me-1"></i> Scan or Paste Book Copy QR / Access Code
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="fa-solid fa-barcode"></i></span>
+                        <input type="text" id="returnQrInput" class="form-control" placeholder="Scan Copy QR (e.g. SMART_LIB_COPY:KIOT-CSE-0001 or KIOT-CSE-0001)...">
+                        <button type="button" onclick="handleReturnScanResolve()" class="btn btn-success text-white fw-semibold">
+                            <i class="fa-solid fa-magnifying-glass me-1"></i> Resolve Copy
+                        </button>
+                    </div>
+                    <div id="returnScanFeedback" class="small mt-2" style="display:none;"></div>
+                </div>
+
+                <form method="POST" action="{{ url_for('librarian.return_book') }}">
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">Select Active Issued Transaction</label>
+                        <select id="txSelect" name="transaction_id" class="form-select" required>
+                            <option value="" disabled selected>Search / Select Copy Code or Student...</option>
+                            {% for tx in transactions %}
+                                <option value="{{ tx.id }}" data-copy="{{ tx.copy.copy_code }}">
+                                    {{ tx.copy.copy_code }} — {{ tx.copy.book.title }} (Borrowed by: {{ tx.student.name }} | Due: {{ tx.due_date.strftime('%Y-%m-%d') }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">Book Condition on Return</label>
+                        <select name="condition" class="form-select">
+                            <option value="GOOD" selected>GOOD - Normal return</option>
+                            <option value="EXCELLENT">EXCELLENT - Pristine condition</option>
+                            <option value="DAMAGED">DAMAGED - Requires repair / fine assessment</option>
+                            <option value="LOST">LOST - Reported lost</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">Librarian Remarks / Notes</label>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="Optional notes..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-success text-white w-100 py-2.5 fw-semibold rounded-3 shadow-sm">
+                        <i class="fa-solid fa-square-check me-2"></i>Process Return & Calculate Fine
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function handleReturnScanResolve() {
+    const qrVal = document.getElementById('returnQrInput').value.trim();
+    const feedback = document.getElementById('returnScanFeedback');
+    if (!qrVal) return;
+
+    fetch('/api/qr/resolve', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({qr_data: qrVal})
+    })
+    .then(r => r.json())
+    .then(data => {
+        feedback.style.display = 'block';
+        if (data.status === 'success' && data.type === 'copy') {
+            if (data.active_transaction_id) {
+                document.getElementById('txSelect').value = data.active_transaction_id;
+                feedback.className = 'small mt-2 text-success fw-bold';
+                feedback.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i> Found Active Issued Loan for Copy: ${data.copy_code} (${data.book_title})`;
+            } else {
+                feedback.className = 'small mt-2 text-warning fw-bold';
+                feedback.innerHTML = `<i class="fa-solid fa-circle-info me-1"></i> Copy ${data.copy_code} is currently ${data.book_status} (Not issued).`;
+            }
+        } else {
+            feedback.className = 'small mt-2 text-danger fw-bold';
+            feedback.innerHTML = `<i class="fa-solid fa-circle-xmark me-1"></i> ${data.message || 'Copy not found.'}`;
+        }
+    })
+    .catch(err => {
+        feedback.style.display = 'block';
+        feedback.className = 'small mt-2 text-danger fw-bold';
+        feedback.innerHTML = `<i class="fa-solid fa-circle-xmark me-1"></i> Failed to resolve QR code.`;
+    });
+}
+</script>
+{% endblock %}

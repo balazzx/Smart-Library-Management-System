@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Announcements - Smart Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row g-4">
+        <!-- New Announcement Form -->
+        <div class="col-lg-5">
+            <div class="card card-custom p-4 shadow-sm border-0 rounded-4">
+                <h5 class="fw-bold text-navy mb-3"><i class="fa-solid fa-bullhorn text-warning me-2"></i>Create Announcement</h5>
+                
+                <form method="POST" action="{{ url_for('librarian.announcements') }}">
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">Title</label>
+                        <input type="text" name="title" class="form-control" placeholder="e.g. Library Extended Hours" required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">Priority</label>
+                            <select name="priority" class="form-select">
+                                <option value="LOW">LOW</option>
+                                <option value="MEDIUM" selected>MEDIUM</option>
+                                <option value="HIGH">HIGH</option>
+                                <option value="URGENT">URGENT</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">Target Dept</label>
+                            <select name="target_department_id" class="form-select">
+                                <option value="">All Departments</option>
+                                {% for d in departments %}
+                                    <option value="{{ d.id }}">{{ d.code }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">Start Date</label>
+                            <input type="date" name="start_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">End Date</label>
+                            <input type="date" name="end_date" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">Message Content</label>
+                        <textarea name="message" class="form-control" rows="3" required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-warning text-dark w-100 fw-bold rounded-3"><i class="fa-solid fa-paper-plane me-2"></i>Publish Announcement</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Announcements Table -->
+        <div class="col-lg-7">
+            <div class="card card-custom p-4 shadow-sm border-0">
+                <h5 class="fw-bold text-navy mb-3"><i class="fa-solid fa-list me-2 text-primary"></i>Active Campus Announcements</h5>
+                
+                <div class="list-group list-group-flush">
+                    {% for a in announcements %}
+                        <div class="list-group-item p-3 border rounded mb-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="fw-bold mb-0 text-navy">{{ a.title }}</h6>
+                                <span class="badge bg-{% if a.priority == 'URGENT' %}danger{% else %}warning text-dark{% endif %} font-monospace">{{ a.priority }}</span>
+                            </div>
+                            <p class="text-secondary small mb-2">{{ a.message }}</p>
+                            <small class="text-muted font-monospace" style="font-size: 0.75rem;">Active: {{ a.start_date }} to {{ a.end_date }}</small>
+                        </div>
+                    {% else %}
+                        <p class="text-muted py-4 text-center">No announcements created.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

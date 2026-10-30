@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Book - Smart Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card card-custom p-4 shadow-sm border-0 rounded-4">
+                <h4 class="fw-bold text-navy mb-3"><i class="fa-solid fa-plus-circle text-primary me-2"></i>Add New Catalog Book Record</h4>
+
+                <form method="POST" action="{{ url_for('librarian.add_book') }}" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">Book Title</label>
+                            <input type="text" name="title" class="form-control" placeholder="e.g. Python Crash Course" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">ISBN (Unique)</label>
+                            <input type="text" name="isbn" class="form-control font-monospace" placeholder="9781593279288" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">Author</label>
+                            <select name="author_id" class="form-select" required>
+                                {% for a in authors %}
+                                    <option value="{{ a.id }}">{{ a.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">Category</label>
+                            <select name="category_id" class="form-select" required>
+                                {% for c in categories %}
+                                    <option value="{{ c.id }}">{{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">Publisher</label>
+                            <select name="publisher_id" class="form-select" required>
+                                {% for p in publishers %}
+                                    <option value="{{ p.id }}">{{ p.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">Publication Year</label>
+                            <input type="number" name="pub_year" class="form-control" value="2023" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">Initial Physical Copies</label>
+                            <input type="number" name="initial_copies" class="form-control" value="3" min="1" max="50" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">Smart Shelf Location</label>
+                            <select name="location_id" class="form-select">
+                                {% for loc in locations %}
+                                    <option value="{{ loc.id }}">{{ loc.display_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">Book Description</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Enter book overview..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold rounded-3"><i class="fa-solid fa-floppy-disk me-2"></i>Save Book & Generate Copies</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

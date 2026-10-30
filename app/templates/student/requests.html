@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}My Book Requests - Smart Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h4 class="fw-bold mb-1"><i class="fa-solid fa-paper-plane text-primary me-2"></i>My Book Requests</h4>
+            <p class="text-muted small mb-0">Review online request status and librarian review notes</p>
+        </div>
+        <a href="{{ url_for('student.search_books') }}" class="btn btn-primary btn-sm rounded-pill px-3">
+            <i class="fa-solid fa-plus me-1"></i> Request New Book
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-body p-0">
+            {% if requests %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light fs-7">
+                            <tr>
+                                <th>Book Title</th>
+                                <th>Request Date</th>
+                                <th>Status</th>
+                                <th>Reviewer Notes</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for req in requests %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('student.book_details', book_id=req.book.id) }}" class="fw-bold text-dark text-decoration-none">
+                                            {{ req.book.title }}
+                                        </a>
+                                        <div class="small text-muted">ISBN: {{ req.book.isbn }}</div>
+                                    </td>
+                                    <td>{{ req.request_date.strftime('%b %d, %Y %H:%M') }}</td>
+                                    <td>
+                                        {% if req.status == 'PENDING' %}
+                                            <span class="badge bg-warning text-dark"><i class="fa-solid fa-clock me-1"></i>Pending Review</span>
+                                        {% elif req.status == 'APPROVED' %}
+                                            <span class="badge bg-success"><i class="fa-solid fa-circle-check me-1"></i>Approved & Issued</span>
+                                        {% elif req.status == 'REJECTED' %}
+                                            <span class="badge bg-danger"><i class="fa-solid fa-circle-xmark me-1"></i>Rejected</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ req.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="small text-muted">{{ req.notes or 'No notes provided' }}</span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('student.book_details', book_id=req.book.id) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                            View Book
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fa-solid fa-inbox text-muted fs-1 mb-3"></i>
+                    <h6 class="fw-bold text-dark">No Book Requests Found</h6>
+                    <p class="text-muted small">You haven't requested any books yet. Search the catalog to request a book.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

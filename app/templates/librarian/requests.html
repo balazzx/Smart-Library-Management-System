@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Book Issue Requests - Smart Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="mb-4">
+        <h3 class="fw-bold mb-1 text-navy"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i>Student Issue Requests</h3>
+        <p class="text-muted mb-0">Review online book requests and approve/reject before assigning physical copies</p>
+    </div>
+
+    <!-- Filter Tabs -->
+    <ul class="nav nav-pills mb-4">
+        <li class="nav-item">
+            <a href="{{ url_for('librarian.requests_list', status='PENDING') }}" class="nav-link {% if current_status == 'PENDING' %}active{% endif %} fw-semibold">Pending Requests</a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ url_for('librarian.requests_list', status='APPROVED') }}" class="nav-link {% if current_status == 'APPROVED' %}active{% endif %} fw-semibold">Approved</a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ url_for('librarian.requests_list', status='REJECTED') }}" class="nav-link {% if current_status == 'REJECTED' %}active{% endif %} fw-semibold">Rejected</a>
+        </li>
+    </ul>
+
+    <div class="card card-custom p-4 shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Cover</th>
+                        <th>Student Name</th>
+                        <th>Roll No</th>
+                        <th>Requested Book</th>
+                        <th>Request Date</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in requests %}
+                        <tr>
+                            <td>
+                                <img src="{{ url_for('static', filename=req.book.cover_path) }}"
+                                     onerror="this.src='{{ url_for('static', filename='default_cover.jpg') }}'"
+                                     class="book-cover-sm" alt="{{ req.book.title }} cover">
+                            </td>
+                            <td class="fw-semibold text-navy">{{ req.student.name }}</td>
+                            <td><span class="badge bg-secondary font-monospace">{{ req.student.student_id }}</span></td>
+                            <td class="fw-semibold">{{ req.book.title }}</td>
+                            <td class="small text-muted">{{ req.request_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <span class="badge badge-status {% if req.status == 'APPROVED' %}badge-available{% elif req.status == 'PENDING' %}badge-pending{% else %}badge-overdue{% endif %}">
+                                    {{ req.status }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if req.status == 'PENDING' %}
+                                    <form method="POST" action="{{ url_for('librarian.approve_request', req_id=req.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-success fw-semibold"><i class="fa-solid fa-check me-1"></i>Approve & Issue</button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('librarian.reject_request', req_id=req.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger fw-semibold"><i class="fa-solid fa-xmark me-1"></i>Reject</button>
+                                    </form>
+                                {% else %}
+                                    <span class="text-muted small">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">No requests found under status {{ current_status }}.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

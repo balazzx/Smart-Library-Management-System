@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - KIOT Central Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+    <div class="mb-4">
+        <h4 class="fw-bold mb-1 text-navy"><i class="fa-solid fa-id-card text-primary me-2"></i>Student Profile</h4>
+        <p class="text-muted small mb-0">Official KIOT Central Library student membership and profile details</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-4">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                    {{ student.name[0] }}
+                </div>
+                <h5 class="fw-bold mb-1 text-dark">{{ student.name }}</h5>
+                <p class="badge bg-secondary rounded-pill px-3 py-1 mb-3">{{ student.department.name }} ({{ student.department.code }})</p>
+                
+                <div class="text-start bg-light p-3 rounded-3 small">
+                    <div class="mb-2"><i class="fa-solid fa-hashtag me-2 text-primary"></i>Roll No: <strong>{{ student.student_id }}</strong></div>
+                    {% if student.reg_no %}<div class="mb-2"><i class="fa-solid fa-address-card me-2 text-primary"></i>Reg No: <strong>{{ student.reg_no }}</strong></div>{% endif %}
+                    <div class="mb-2"><i class="fa-solid fa-barcode me-2 text-primary"></i>Card No: <strong>{{ student.library_card_number }}</strong></div>
+                    {% if student.section %}<div class="mb-2"><i class="fa-solid fa-users-viewfinder me-2 text-primary"></i>Section: <strong>{{ student.section }}</strong></div>{% endif %}
+                    {% if student.gender %}<div class="mb-0"><i class="fa-solid fa-venus-mars me-2 text-primary"></i>Gender: <strong>{{ student.gender }}</strong></div>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-user-pen me-2 text-primary"></i>Account & Contact Details</h6>
+                    <span class="badge bg-success font-monospace">ACTIVE MEMBER</span>
+                </div>
+                <div class="card-body p-4">
+                    <form action="{{ url_for('student.profile') }}" method="POST">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-muted">Full Name</label>
+                                <input type="text" class="form-control rounded-3 bg-light" value="{{ student.name }}" readonly>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-muted">Roll Number</label>
+                                <input type="text" class="form-control rounded-3 bg-light" value="{{ student.student_id }}" readonly>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-muted">Register Number</label>
+                                <input type="text" class="form-control rounded-3 bg-light" value="{{ student.reg_no or 'N/A' }}" readonly>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-muted">Department</label>
+                                <input type="text" class="form-control rounded-3 bg-light" value="{{ student.department.name }} ({{ student.department.code }})" readonly>
+                            </div>
+
+                            {% if student.mentor_name %}
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-muted">Faculty Mentor</label>
+                                <input type="text" class="form-control rounded-3 bg-light" value="{{ student.mentor_name }}" readonly>
+                            </div>
+                            {% endif %}
+
+                            {% if student.class_advisor %}
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-muted">Class Advisor</label>
+                                <input type="text" class="form-control rounded-3 bg-light" value="{{ student.class_advisor }}" readonly>
+                            </div>
+                            {% endif %}
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-muted">Max Borrow Limit</label>
+                                <input type="text" class="form-control rounded-3 bg-light" value="{{ student.max_borrow_limit }} Books" readonly>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-muted">College Email Address</label>
+                                <input type="email" name="email" class="form-control rounded-3" value="{{ user.email }}" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-muted">Contact Phone Number</label>
+                                <input type="text" name="phone" class="form-control rounded-3" value="{{ student.phone or '' }}" placeholder="Enter contact number">
+                            </div>
+                        </div>
+
+                        <div class="mt-4 text-end">
+                            <a href="{{ url_for('student.dashboard') }}" class="btn btn-light rounded-pill me-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4">
+                                <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

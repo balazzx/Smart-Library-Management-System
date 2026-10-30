@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}ZIP Cover Upload Report — KIOT Central Library{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-3">
+  <div class="d-flex align-items-center mb-4">
+    <a href="{{ url_for('librarian.cover_management') }}" class="btn btn-outline-secondary btn-sm rounded-pill me-3">
+      <i class="fa-solid fa-arrow-left me-1"></i>Back to Cover Management
+    </a>
+    <h4 class="fw-bold mb-0 text-navy"><i class="fa-solid fa-file-zipper text-primary me-2"></i>ZIP Upload Report</h4>
+  </div>
+
+  <!-- Summary Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-2">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+        <div class="fs-3 fw-bold text-success">{{ report.matched|length }}</div>
+        <div class="small text-muted">Matched</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+        <div class="fs-3 fw-bold text-warning">{{ report.unmatched|length }}</div>
+        <div class="small text-muted">Unmatched</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+        <div class="fs-3 fw-bold text-secondary">{{ report.duplicate|length }}</div>
+        <div class="small text-muted">Duplicate</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+        <div class="fs-3 fw-bold text-danger">{{ report.invalid|length }}</div>
+        <div class="small text-muted">Invalid</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+        <div class="fs-3 fw-bold text-danger">{{ report.errors|length }}</div>
+        <div class="small text-muted">Errors</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+        <div class="fs-3 fw-bold text-info">{{ report.books_still_missing|length }}</div>
+        <div class="small text-muted">Still Missing</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Matched -->
+  {% if report.matched %}
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-success bg-opacity-10 border-0 rounded-top-4">
+      <h6 class="mb-0 text-success fw-semibold"><i class="fa-solid fa-circle-check me-2"></i>Matched ({{ report.matched|length }})</h6>
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-sm table-hover mb-0">
+        <thead class="table-light"><tr><th>File</th><th>ISBN</th></tr></thead>
+        <tbody>
+          {% for m in report.matched %}
+          <tr>
+            <td class="small font-monospace">{{ m.file }}</td>
+            <td><code>{{ m.isbn }}</code></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Unmatched -->
+  {% if report.unmatched %}
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-warning bg-opacity-10 border-0 rounded-top-4">
+      <h6 class="mb-0 text-warning fw-semibold">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>Unmatched — Saved for Manual Review ({{ report.unmatched|length }})
+      </h6>
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-sm table-hover mb-0">
+        <thead class="table-light"><tr><th>Original File</th><th>Saved As</th><th>Reason</th></tr></thead>
+        <tbody>
+          {% for u in report.unmatched %}
+          <tr>
+            <td class="small font-monospace">{{ u.file }}</td>
+            <td class="small font-monospace text-muted">{{ u.saved_as }}</td>
+            <td class="small text-muted">{{ u.reason }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Duplicate -->
+  {% if report.duplicate %}
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-secondary bg-opacity-10 border-0 rounded-top-4">
+      <h6 class="mb-0 fw-semibold"><i class="fa-solid fa-copy me-2"></i>Duplicates — Not Overwritten ({{ report.duplicate|length }})</h6>
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-sm table-hover mb-0">
+        <thead class="table-light"><tr><th>File</th><th>ISBN</th><th>Reason</th></tr></thead>
+        <tbody>
+          {% for d in report.duplicate %}
+          <tr>
+            <td class="small font-monospace">{{ d.file }}</td>
+            <td><code>{{ d.isbn }}</code></td>
+            <td class="small text-muted">{{ d.reason }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Invalid -->
+  {% if report.invalid %}
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-danger bg-opacity-10 border-0 rounded-top-4">
+      <h6 class="mb-0 text-danger fw-semibold"><i class="fa-solid fa-ban me-2"></i>Invalid Images ({{ report.invalid|length }})</h6>
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-sm table-hover mb-0">
+        <thead class="table-light"><tr><th>File</th><th>Reason</th></tr></thead>
+        <tbody>
+          {% for iv in report.invalid %}
+          <tr>
+            <td class="small font-monospace">{{ iv.file }}</td>
+            <td class="small text-muted">{{ iv.reason }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Still Missing -->
+  {% if report.books_still_missing %}
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-info bg-opacity-10 border-0 rounded-top-4">
+      <h6 class="mb-0 text-info fw-semibold">
+        <i class="fa-solid fa-circle-question me-2"></i>Books Still Missing Covers ({{ report.books_still_missing|length }})
+      </h6>
+    </div>
+    <div class="card-body">
+      <div class="d-flex flex-wrap gap-2">
+        {% for isbn in report.books_still_missing %}
+        <code class="badge bg-light text-dark border" style="font-size:.8rem">{{ isbn }}</code>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

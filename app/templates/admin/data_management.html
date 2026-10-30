@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+
+{% block title %}Data Management Center — KIOT Central Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1 text-navy"><i class="fa-solid fa-database text-primary me-2"></i>Excel Data Management Center</h3>
+            <p class="text-muted mb-0">KIOT Central Library — Authoritative dataset files and current database status</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.system_health') }}" class="btn btn-outline-info rounded-pill btn-sm">
+                <i class="fa-solid fa-heart-pulse me-1"></i> System Health
+            </a>
+            <a href="{{ url_for('admin.data_quality') }}" class="btn btn-outline-warning rounded-pill btn-sm">
+                <i class="fa-solid fa-shield-halved me-1"></i> Data Quality
+            </a>
+        </div>
+    </div>
+
+    <div class="card card-custom p-4 border-0 shadow-sm mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold text-navy mb-0"><i class="fa-solid fa-image me-2 text-primary"></i>Book Cover Status</h5>
+            <span class="small text-muted">ISBN-matched files in <code>app/static/book_covers</code></span>
+        </div>
+        <div class="row g-3">
+            {% set cover_items = [
+                ('Total Catalog Books', db_stats.cover_status.total_books, 'text-dark'),
+                ('Verified Covers', db_stats.cover_status.verified_covers, 'text-success'),
+                ('Local Covers', db_stats.cover_status.local_covers, 'text-primary'),
+                ('Remote Covers', db_stats.cover_status.remote_covers, 'text-info'),
+                ('Missing Covers', db_stats.cover_status.covers_missing, 'text-warning'),
+                ('Download Failed', db_stats.cover_status.download_failed, 'text-danger'),
+                ('Unverified Covers', db_stats.cover_status.unverified_covers, 'text-secondary'),
+                ('Duplicate ISBN', db_stats.cover_status.duplicate_isbn, 'text-info')
+            ] %}
+            {% for label, value, color in cover_items %}
+            <div class="col-md-2 col-sm-4 col-6">
+                <div class="border rounded-3 p-3 text-center">
+                    <div class="fw-bold fs-4 {{ color }}">{{ value }}</div>
+                    <div class="small text-muted">{{ label }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- DB Current State -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="card card-custom p-4 border-0 shadow-sm">
+                <h5 class="fw-bold text-navy mb-3"><i class="fa-solid fa-chart-column me-2 text-success"></i>Current Database State</h5>
+                <div class="row g-3">
+                    {% set db_items = [
+                        ('fa-user-graduate', 'Students', db_stats.students, 66, 'text-primary'),
+                        ('fa-book', 'Books', db_stats.books, 500, 'text-success'),
+                        ('fa-copy', 'Book Copies', db_stats.copies, 500, 'text-warning'),
+                        ('fa-arrow-right-arrow-left', 'Transactions', db_stats.transactions, 0, 'text-info'),
+                        ('fa-map-pin', 'Locations', db_stats.locations, 360, 'text-secondary'),
+                    ] %}
+                    {% for icon, label, actual, expected, color in db_items %}
+                    <div class="col-md-2 col-sm-4 col-6">
+                        <div class="text-center p-3 rounded-3 border {% if expected > 0 and actual == expected %}border-success bg-light{% elif actual > 0 %}border-primary bg-light{% else %}border-danger bg-light{% endif %}">
+                            <i class="fa-solid {{ icon }} {{ color }} mb-2 fs-4"></i>
+                            <div class="fw-bold fs-5">{{ actual }}</div>
+                            <div class="small text-muted">{{ label }}</div>
+                            {% if expected > 0 %}
+                            <small class="text-muted">/ {{ expected }} expected</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Authoritative Files -->
+    <div class="card card-custom p-4 border-0 shadow-sm mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold text-navy mb-0"><i class="fa-solid fa-file-excel me-2 text-success"></i>Authoritative Final Datasets — Datas/ Folder</h5>
+            <div>
+                <button class="btn btn-outline-success rounded-pill btn-sm me-2" onclick="reconcileData()">
+                    <i class="fa-solid fa-scale-balanced me-1"></i> Reconcile Data
+                </button>
+                <button class="btn btn-primary rounded-pill btn-sm" onclick="triggerWebImport()">
+                    <i class="fa-solid fa-rotate me-1"></i> Re-Import Datasets Now
+                </button>
+            </div>
+        </div>
+        <div class="alert alert-info py-2 small mb-3">
+            <i class="fa-solid fa-circle-info me-1"></i>
+            These <code>*_Final.xlsx</code> files are the <strong>authoritative source of truth</strong> for initial data loading. Click <strong>Preview Data</strong> or <strong>Validate</strong> on any file to inspect rows live.
+        </div>
+
+        <div class="row g-3">
+            {% for f in available_files %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card p-3 border {% if f.exists %}border-success{% else %}border-danger{% endif %} rounded-3 h-100 shadow-sm">
+                    <div class="d-flex align-items-start">
+                        <div class="me-3 mt-1">
+                            {% if f.exists %}
+                                <i class="fa-solid fa-file-excel text-success fs-3"></i>
+                            {% else %}
+                                <i class="fa-solid fa-file-excel text-danger fs-3"></i>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold small font-monospace text-navy">{{ f.name }}</div>
+                            <div class="small text-muted mt-1">{{ f.desc }}</div>
+                            <div class="mt-2 d-flex align-items-center justify-content-between">
+                                <div>
+                                    {% if f.exists %}
+                                        <span class="badge bg-success">Found</span>
+                                        <small class="text-muted ms-1">{{ f.size_kb }} KB</small>
+                                    {% else %}
+                                        <span class="badge bg-danger">Missing</span>
+                                    {% endif %}
+                                </div>
+                                {% if f.exists %}
+                                <div class="d-flex gap-1">
+                                    <button class="btn btn-sm btn-outline-primary rounded-pill py-0 px-2" onclick="previewDataset('{{ f.key }}', '{{ f.name }}')">
+                                        <i class="fa-solid fa-eye me-1"></i> Preview
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success rounded-pill py-0 px-2" onclick="validateDataset('{{ f.key }}', '{{ f.name }}')">
+                                        <i class="fa-solid fa-check me-1"></i> Validate
+                                    </button>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-navy text-white">
+                    <h5 class="modal-title" id="previewModalTitle"><i class="fa-solid fa-table me-2 text-info"></i>Excel Preview</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="previewSpinner" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="text-muted mt-2">Loading dataset preview...</p>
+                    </div>
+                    <div id="previewContent" class="d-none">
+                        <div class="alert alert-light border mb-3 d-flex justify-content-between align-items-center">
+                            <span>Total Dataset Rows: <strong id="previewTotalRows">0</strong></span>
+                            <span class="badge bg-info text-dark">Showing First 10 Sample Rows</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-sm text-nowrap" id="previewTable">
+                                <thead class="table-dark" id="previewThead"></thead>
+                                <tbody id="previewTbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reconciliation Modal -->
+    <div class="modal fade" id="reconcileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-navy text-white">
+                    <h5 class="modal-title"><i class="fa-solid fa-scale-balanced me-2 text-success"></i>Live Data Reconciliation Report</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="reconcileSpinner" class="text-center py-4">
+                        <div class="spinner-border text-success" role="status"></div>
+                        <p class="text-muted mt-2">Reconciling Excel datasets with database records...</p>
+                    </div>
+                    <div id="reconcileContent" class="d-none">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Entity</th>
+                                    <th>Excel Records</th>
+                                    <th>Database Records</th>
+                                    <th>Difference</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reconcileTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Instructions -->
+    <div class="card card-custom p-4 border-0 shadow-sm mb-4">
+        <h5 class="fw-bold text-navy mb-3"><i class="fa-solid fa-terminal me-2 text-dark"></i>Re-Import Instructions & Automated Sync</h5>
+        <div class="row g-4">
+            <div class="col-md-8">
+                <div class="alert alert-warning py-2 small mb-3">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                    <strong>Warning:</strong> Re-importing data will rebuild database schema and load authoritative Excel data. An automatic SQLite database backup file will be created first.
+                </div>
+                <ol class="small">
+                    <li class="mb-2">Ensure all <code>*_Final.xlsx</code> files are present in the <code>Datas/</code> folder.</li>
+                    <li class="mb-2">Click <strong>Re-Import Datasets Now</strong> button above or run command line: <code class="bg-dark text-white px-2 py-1 rounded">python import_kiot_data.py</code></li>
+                    <li class="mb-2">The import engine automatically checks department integrity, book details, locations, transactions, and fines.</li>
+                </ol>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-dark text-light p-3 rounded-3 small font-monospace">
+                    <div class="text-success">$ python import_kiot_data.py</div>
+                    <div class="text-muted mt-1">Students : 66  PASS</div>
+                    <div class="text-muted">Books     : 500 PASS</div>
+                    <div class="text-muted">Copies    : 500 PASS</div>
+                    <div class="text-muted">Locations : 360 PASS</div>
+                    <div class="text-muted">History   : 1527 PASS</div>
+                    <div class="text-success mt-1">Import Complete.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function previewDataset(key, filename) {
+    document.getElementById('previewModalTitle').innerHTML = '<i class="fa-solid fa-table me-2 text-info"></i>Preview: ' + filename;
+    document.getElementById('previewSpinner').classList.remove('d-none');
+    document.getElementById('previewContent').classList.add('d-none');
+    
+    const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    modal.show();
+
+    fetch(`/admin/data-management/preview/${key}`)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('previewSpinner').classList.add('d-none');
+            if (data.error) {
+                alert('Error loading preview: ' + data.error);
+                return;
+            }
+            document.getElementById('previewTotalRows').innerText = data.total_rows;
+            
+            // Build Head
+            let headHtml = '<tr>';
+            data.headers.forEach(h => { headHtml += `<th>${h}</th>`; });
+            headHtml += '</tr>';
+            document.getElementById('previewThead').innerHTML = headHtml;
+
+            // Build Body
+            let bodyHtml = '';
+            data.rows.forEach(row => {
+                bodyHtml += '<tr>';
+                row.forEach(cell => { bodyHtml += `<td>${cell}</td>`; });
+                bodyHtml += '</tr>';
+            });
+            document.getElementById('previewTbody').innerHTML = bodyHtml;
+            document.getElementById('previewContent').classList.remove('d-none');
+        })
+        .catch(err => {
+            document.getElementById('previewSpinner').classList.add('d-none');
+            alert('Failed to load dataset preview');
+        });
+}
+
+function validateDataset(key, filename) {
+    fetch(`/admin/data-management/validate/${key}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                alert('Validation error: ' + data.error);
+            } else {
+                alert(`Dataset Validation Report for ${filename}:\n\nTotal Records: ${data.total_records}\nMissing Required: ${data.missing_required}\nDuplicates: ${data.duplicates}\nStatus: ${data.status}`);
+            }
+        })
+        .catch(err => alert('Validation request failed: ' + err));
+}
+
+function reconcileData() {
+    document.getElementById('reconcileSpinner').classList.remove('d-none');
+    document.getElementById('reconcileContent').classList.add('d-none');
+
+    const modal = new bootstrap.Modal(document.getElementById('reconcileModal'));
+    modal.show();
+
+    fetch('/admin/data-management/reconcile')
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('reconcileSpinner').classList.add('d-none');
+            if (!data.success) {
+                alert('Reconciliation error');
+                return;
+            }
+            let html = '';
+            data.report.forEach(r => {
+                const badgeClass = r.status === 'PASS' ? 'bg-success' : 'bg-danger';
+                html += `<tr>
+                    <td class="fw-bold">${r.entity}</td>
+                    <td class="font-monospace">${r.excel_records}</td>
+                    <td class="font-monospace">${r.database_records}</td>
+                    <td class="font-monospace">${r.difference}</td>
+                    <td><span class="badge ${badgeClass}">${r.status}</span></td>
+                </tr>`;
+            });
+            document.getElementById('reconcileTbody').innerHTML = html;
+            document.getElementById('reconcileContent').classList.remove('d-none');
+        })
+        .catch(err => {
+            document.getElementById('reconcileSpinner').classList.add('d-none');
+            alert('Reconciliation failed: ' + err);
+        });
+}
+
+function triggerWebImport() {
+    if (!confirm('Are you sure you want to re-import authoritative Excel datasets? This will safely back up current database and load fresh records.')) {
+        return;
+    }
+    fetch('/admin/data-management/execute-import', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert('Success: ' + data.message);
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(err => alert('Execution failed: ' + err));
+}
+</script>
+
+    <!-- Important Notes -->
+    <div class="card card-custom p-4 border-0 shadow-sm">
+        <h5 class="fw-bold text-navy mb-3"><i class="fa-solid fa-circle-info me-2 text-info"></i>Important Data Management Rules</h5>
+        <div class="row g-3 small">
+            <div class="col-md-6">
+                <ul class="list-unstyled">
+                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>Always use <code>*_Final.xlsx</code> files — never old non-Final files</li>
+                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>Roll Numbers preserve exact 3-digit suffixes (e.g., <code>2k24cse023</code>)</li>
+                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>ACCESS NO. (e.g., KIOT-CSE-0001) uniquely identifies physical copies</li>
+                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>ISBN identifies book titles; ACCESS NO. identifies physical copies</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <ul class="list-unstyled">
+                    <li class="mb-2"><i class="fa-solid fa-ban text-danger me-2"></i>Do NOT use Students.xlsx, Books.xlsx, or other old files</li>
+                    <li class="mb-2"><i class="fa-solid fa-ban text-danger me-2"></i>Do NOT generate fake students, books, or transactions</li>
+                    <li class="mb-2"><i class="fa-solid fa-ban text-danger me-2"></i>Do NOT require Staff_Librarians.xlsx (single librarian system)</li>
+                    <li class="mb-2"><i class="fa-solid fa-ban text-danger me-2"></i>Do NOT change valid Roll Number suffixes</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

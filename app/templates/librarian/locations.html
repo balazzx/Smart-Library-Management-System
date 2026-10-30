@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Library Navigator & Shelf Locations - KIOT Central Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h4 class="fw-bold mb-1 text-navy"><i class="fa-solid fa-compass text-primary me-2"></i>Library Navigator & Shelf Locations</h4>
+            <p class="text-muted small mb-0">Navigate exact physical placement hierarchy (Block, Floor, Section, Rack, Shelf, Position) for 360 library shelf locations</p>
+        </div>
+        <button class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#addLocationModal">
+            <i class="fa-solid fa-plus me-1"></i> Add New Location
+        </button>
+    </div>
+
+    <!-- Quick Location Search Box -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <h6 class="fw-bold text-navy mb-3"><i class="fa-solid fa-magnifying-glass me-2 text-primary"></i>Library Location Navigator Search</h6>
+        <div class="row g-3">
+            <div class="col-md-8">
+                <input type="text" id="navigatorSearchInput" onkeyup="filterNavigatorTable()" class="form-control rounded-pill shadow-sm" placeholder="Search by Access No, Book Title, Section, Rack, Floor, or Block...">
+            </div>
+            <div class="col-md-4">
+                <select id="floorFilterSelect" onchange="filterNavigatorTable()" class="form-select rounded-pill">
+                    <option value="">All Floors (Ground, 1st, 2nd Floor)</option>
+                    <option value="Ground Floor">Ground Floor</option>
+                    <option value="1st Floor">1st Floor</option>
+                    <option value="2nd Floor">2nd Floor</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="navigatorTable">
+                    <thead class="table-light fs-7">
+                        <tr>
+                            <th>Block</th>
+                            <th>Floor</th>
+                            <th>Section</th>
+                            <th>Rack</th>
+                            <th>Shelf</th>
+                            <th>Position</th>
+                            <th>Full Physical Location Display</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for loc in locations %}
+                            <tr>
+                                <td><span class="badge bg-navy text-white font-monospace">{{ loc.block }}</span></td>
+                                <td class="fw-semibold text-primary">{{ loc.floor }}</td>
+                                <td><span class="badge bg-secondary font-monospace">{{ loc.section }}</span></td>
+                                <td class="font-monospace fw-bold">{{ loc.rack }}</td>
+                                <td class="font-monospace">{{ loc.shelf }}</td>
+                                <td><span class="badge bg-light text-dark border font-monospace">Pos {{ loc.position }}</span></td>
+                                <td class="fw-bold text-navy font-monospace fs-7">{{ loc.display_name }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Location Modal -->
+<div class="modal fade" id="addLocationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom py-3">
+                <h6 class="modal-title fw-bold"><i class="fa-solid fa-plus text-primary me-2"></i>Add Shelf Location</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('librarian.locations') }}" method="POST">
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Block <span class="text-danger">*</span></label>
+                            <input type="text" name="block" class="form-control rounded-3" placeholder="e.g. Main Library" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Floor <span class="text-danger">*</span></label>
+                            <input type="text" name="floor" class="form-control rounded-3" placeholder="e.g. 1st Floor" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Section <span class="text-danger">*</span></label>
+                            <input type="text" name="section" class="form-control rounded-3" placeholder="e.g. CSE" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Rack</label>
+                            <input type="text" name="rack" class="form-control rounded-3" placeholder="e.g. Rack CSE-04">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Shelf</label>
+                            <input type="text" name="shelf" class="form-control rounded-3" placeholder="e.g. Shelf 2">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Position</label>
+                            <input type="text" name="position" class="form-control rounded-3" placeholder="e.g. 15">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top py-2">
+                    <button type="button" class="btn btn-light btn-sm rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3">Save Location</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterNavigatorTable() {
+    const searchVal = document.getElementById('navigatorSearchInput').value.toLowerCase();
+    const floorVal = document.getElementById('floorFilterSelect').value.toLowerCase();
+    const table = document.getElementById('navigatorTable');
+    const trs = table.getElementsByTagName('tr');
+
+    for (let i = 1; i < trs.length; i++) {
+        const rowText = trs[i].innerText.toLowerCase();
+        const matchesSearch = !searchVal || rowText.includes(searchVal);
+        const matchesFloor = !floorVal || rowText.includes(floorVal);
+
+        if (matchesSearch && matchesFloor) {
+            trs[i].style.display = '';
+        } else {
+            trs[i].style.display = 'none';
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Librarian Profile - KIOT Central Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+    <div class="mb-4">
+        <h4 class="fw-bold mb-1 text-navy"><i class="fa-solid fa-user-tie text-primary me-2"></i>Librarian Profile</h4>
+        <p class="text-muted small mb-0">Official KIOT Central Library staff profile and activity performance overview</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-4">
+                <div class="bg-navy text-white rounded-circle d-inline-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <h5 class="fw-bold mb-1 text-dark">{{ librarian.name if librarian else user.username }}</h5>
+                <p class="badge bg-primary rounded-pill px-3 py-1 mb-3">CHIEF LIBRARIAN / ADMIN</p>
+
+                <div class="text-start bg-light p-3 rounded-3 small mb-3">
+                    <div class="mb-2"><i class="fa-solid fa-id-badge me-2 text-primary"></i>Staff ID: <strong>{{ librarian.staff_id if librarian else 'LIB-001' }}</strong></div>
+                    <div class="mb-2"><i class="fa-solid fa-envelope me-2 text-primary"></i>Email: <strong>{{ user.email }}</strong></div>
+                    <div class="mb-2"><i class="fa-solid fa-phone me-2 text-primary"></i>Phone: <strong>{{ librarian.phone if librarian and librarian.phone else 'N/A' }}</strong></div>
+                    <div class="mb-0"><i class="fa-solid fa-building-columns me-2 text-primary"></i>Dept: <strong>{{ librarian.department.name if librarian and librarian.department else 'KIOT Central Library' }}</strong></div>
+                </div>
+
+                <!-- Operational Command Center Quick Links -->
+                <div class="card bg-navy text-white border-0 p-3 rounded-3 text-start shadow-sm">
+                    <div class="fw-bold mb-2 text-warning small text-uppercase"><i class="fa-solid fa-bolt me-1"></i>Command Center Actions</div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('librarian.issue_book') }}" class="btn btn-sm btn-primary text-start rounded-pill"><i class="fa-solid fa-hand-holding-hand me-2"></i>Issue Book</a>
+                        <a href="{{ url_for('librarian.return_book') }}" class="btn btn-sm btn-outline-light text-start rounded-pill"><i class="fa-solid fa-rotate-left me-2"></i>Return Book</a>
+                        <a href="{{ url_for('librarian.fines_list') }}" class="btn btn-sm btn-outline-warning text-start rounded-pill"><i class="fa-solid fa-receipt me-2"></i>Fines Management</a>
+                        <a href="{{ url_for('librarian.reports') }}" class="btn btn-sm btn-outline-info text-start rounded-pill"><i class="fa-solid fa-file-export me-2"></i>Reports & Exports</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-chart-line me-2 text-primary"></i>Circulation & Operations Metrics</h6>
+                    <span class="badge bg-success font-monospace">ONLINE & ACTIVE</span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3 text-center mb-4">
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 bg-light rounded-3">
+                                <div class="text-muted small">Total Transactions</div>
+                                <div class="fs-3 fw-bold text-navy">{{ issued_count }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 bg-light rounded-3">
+                                <div class="text-muted small">Returns Processed</div>
+                                <div class="fs-3 fw-bold text-success">{{ returned_count }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 bg-light rounded-3">
+                                <div class="text-muted small">Active Overdues</div>
+                                <div class="fs-3 fw-bold text-danger">{{ overdue_count }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 bg-light rounded-3">
+                                <div class="text-muted small">Fines Settled</div>
+                                <div class="fs-3 fw-bold text-primary">{{ fines_count }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-navy mb-3"><i class="fa-solid fa-user-pen me-2"></i>Update Staff Contact Details</h6>
+                    <form action="{{ url_for('librarian.profile') }}" method="POST">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-muted">Staff Name</label>
+                                <input type="text" class="form-control rounded-3 bg-light" value="{{ librarian.name if librarian else user.username }}" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-muted">Staff ID</label>
+                                <input type="text" class="form-control rounded-3 bg-light" value="{{ librarian.staff_id if librarian else 'LIB-001' }}" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-muted">Email Address</label>
+                                <input type="email" name="email" class="form-control rounded-3" value="{{ user.email }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-muted">Phone Number</label>
+                                <input type="text" name="phone" class="form-control rounded-3" value="{{ librarian.phone if librarian and librarian.phone else '' }}" placeholder="Enter phone number">
+                            </div>
+                        </div>
+
+                        <div class="mt-4 text-end">
+                            <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline-secondary rounded-pill me-2"><i class="fa-solid fa-key me-1"></i>Change Password</a>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4">
+                                <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Recent Staff Logs -->
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i>My Recent System Actions</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Action</th>
+                                    <th>Entity</th>
+                                    <th>Description</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in recent_logs %}
+                                    <tr>
+                                        <td><span class="badge bg-secondary font-monospace">{{ log.action }}</span></td>
+                                        <td><span class="small font-monospace">{{ log.entity or '-' }}</span></td>
+                                        <td class="small">{{ log.description }}</td>
+                                        <td class="small text-muted font-monospace">{{ log.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    </tr>
+                                {% else %}
+                                    <tr><td colspan="4" class="text-center text-muted py-3">No recent logs recorded.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

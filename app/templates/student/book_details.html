@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.title }} - Book Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <a href="{{ url_for('student.search_books') }}" class="btn btn-outline-secondary btn-sm rounded-pill mb-3">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back to Catalog
+    </a>
+
+    <div class="row g-4 mb-4">
+        <!-- Main Book Overview Card -->
+        <div class="col-lg-8">
+            <div class="card card-custom p-4 shadow-sm border-0">
+                <div class="row g-4">
+                    <div class="col-md-4 text-center">
+                        <div class="p-2 bg-light rounded-3 mb-3 shadow-sm text-center">
+                            <img src="{{ url_for('static', filename=book.cover_path) }}"
+                                 onerror="this.src='{{ url_for('static', filename='default_cover.jpg') }}'"
+                                 class="book-cover book-cover-detail" loading="lazy" alt="{{ book.title }} front cover">
+                        </div>
+                        <img src="{{ url_for('static', filename=qr_url) }}" class="img-fluid border rounded-3 p-2 bg-white" style="max-width: 140px;" alt="Book QR Code">
+                        <small class="d-block text-muted font-monospace mt-1">Scan for Book Details</small>
+                    </div>
+
+                    <div class="col-md-8">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-primary font-monospace">{{ book.category.name }}</span>
+                            {% if book.available_copies_count > 0 %}
+                                <span class="badge badge-status badge-available fs-7"><i class="fa-solid fa-circle-check me-1"></i> {{ book.available_copies_count }} Copy(s) Available</span>
+                            {% else %}
+                                <span class="badge badge-status badge-overdue fs-7"><i class="fa-solid fa-circle-exclamation me-1"></i> Out of Stock</span>
+                            {% endif %}
+                        </div>
+
+                        <h3 class="fw-bold text-navy mb-2">{{ book.title }}</h3>
+                        <p class="text-muted mb-3"><i class="fa-solid fa-pen-nib me-1"></i> Author: <strong>{{ book.author.name }}</strong> | Publisher: {{ book.publisher.name }} ({{ book.pub_year }})</p>
+
+                        <!-- Smart Shelf Location Box -->
+                        <div class="p-3 bg-light rounded-3 mb-3 border-start border-4 border-primary">
+                            <div class="fw-bold text-navy mb-1"><i class="fa-solid fa-location-dot text-primary me-2"></i>Smart Shelf Location</div>
+                            <div class="text-dark small font-monospace">
+                                {% if book.location %}
+                                    {{ book.location.display_name }}
+                                {% else %}
+                                    CSE Main Library - Rack R01, Shelf S02
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-3 text-center">
+                            <div class="col-4">
+                                <div class="p-2 border rounded bg-white">
+                                    <small class="text-muted d-block">ISBN</small>
+                                    <strong class="font-monospace text-dark" style="font-size: 0.85rem;">{{ book.isbn }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2 border rounded bg-white">
+                                    <small class="text-muted d-block">Rating</small>
+                                    <strong class="text-warning"><i class="fa-solid fa-star me-1"></i>{{ book.average_rating }} / 5</strong>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2 border rounded bg-white">
+                                    <small class="text-muted d-block">Total Copies</small>
+                                    <strong class="text-dark">{{ book.total_copies_count }}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex flex-wrap gap-2">
+                            {% if active_borrow %}
+                                <div class="alert alert-info w-100 mb-0 py-2"><i class="fa-solid fa-circle-info me-2"></i>You currently have a copy of this book issued (Due: {{ active_borrow.due_date.strftime('%Y-%m-%d') }}).</div>
+                            {% elif active_request %}
+                                <div class="alert alert-warning w-100 mb-0 py-2"><i class="fa-solid fa-clock me-2"></i>You have a pending request for this book awaiting librarian approval.</div>
+                            {% else %}
+                                {% if book.available_copies_count > 0 %}
+                                    <form method="POST" action="{{ url_for('student.request_book', book_id=book.id) }}">
+                                        <button type="submit" class="btn btn-primary px-4 fw-semibold"><i class="fa-solid fa-hand-holding-hand me-2"></i>Request Book Issue</button>
+                                    </form>
+                                {% else %}
+                                    <form method="POST" action="{{ url_for('student.reserve_book', book_id=book.id) }}">
+                                        <button type="submit" class="btn btn-warning text-dark px-4 fw-semibold"><i class="fa-solid fa-bookmark me-2"></i>Reserve / Join Waiting List</button>
+                                    </form>
+                                {% endif %}
+
+                                <form method="POST" action="{{ url_for('student.toggle_wishlist', book_id=book.id) }}">
+                                    <button type="submit" class="btn btn-outline-danger px-3">
+                                        <i class="fa-{% if in_wishlist %}solid{% else %}regular{% endif %} fa-heart me-1"></i>
+                                        {% if in_wishlist %}Wishlisted{% else %}Add to Wishlist{% endif %}
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top">
+                    <h5 class="fw-bold text-navy mb-2">Book Description & Overview</h5>
+                    <p class="text-secondary leading-relaxed">{{ book.description }}</p>
+                </div>
+
+                <!-- Physical Copies Breakdown Table -->
+                <div class="mt-4 pt-3 border-top">
+                    <h5 class="fw-bold text-navy mb-3"><i class="fa-solid fa-boxes-stacked text-primary me-2"></i>Physical Copies & Exact Shelf Placement</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle mb-0">
+                            <thead class="table-light font-monospace small">
+                                <tr>
+                                    <th>Access No / Copy Code</th>
+                                    <th>Status</th>
+                                    <th>Condition</th>
+                                    <th>Shelf Location</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for copy in book.copies.all() %}
+                                <tr>
+                                    <td class="font-monospace fw-bold text-navy">{{ copy.copy_code }}</td>
+                                    <td>
+                                        {% if copy.status == 'AVAILABLE' %}
+                                            <span class="badge bg-success">Available</span>
+                                        {% elif copy.status == 'ISSUED' %}
+                                            <span class="badge bg-info text-dark">Issued</span>
+                                        {% elif copy.status == 'RESERVED' %}
+                                            <span class="badge bg-warning text-dark">Reserved</span>
+                                        {% elif copy.status == 'DAMAGED' %}
+                                            <span class="badge bg-danger">Damaged</span>
+                                        {% elif copy.status == 'LOST' %}
+                                            <span class="badge bg-dark">Lost</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ copy.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><span class="badge bg-light text-dark border">{{ copy.condition_status }}</span></td>
+                                    <td class="font-monospace small">
+                                        {% if copy.location %}
+                                            <i class="fa-solid fa-location-dot text-danger me-1"></i>{{ copy.location.display_name }}
+                                        {% elif book.location %}
+                                            <i class="fa-solid fa-location-dot text-primary me-1"></i>{{ book.location.display_name }}
+                                        {% else %}
+                                            <span class="text-muted">Central Library Main Stacks</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-muted text-center py-3">No physical copies registered for this title.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rating & Review Section Card -->
+        <div class="col-lg-4">
+            <div class="card card-custom p-4 shadow-sm border-0 mb-4">
+                <h5 class="fw-bold text-navy mb-3"><i class="fa-solid fa-star text-warning me-2"></i>Rate & Review</h5>
+                
+                <form method="POST" action="{{ url_for('student.add_review', book_id=book.id) }}">
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">Rating Star Score</label>
+                        <select name="rating" class="form-select" required>
+                            <option value="5" {% if user_review and user_review.rating == 5 %}selected{% endif %}>⭐⭐⭐⭐⭐ (5 - Excellent)</option>
+                            <option value="4" {% if user_review and user_review.rating == 4 %}selected{% endif %}>⭐⭐⭐⭐ (4 - Very Good)</option>
+                            <option value="3" {% if user_review and user_review.rating == 3 %}selected{% endif %}>⭐⭐⭐ (3 - Average)</option>
+                            <option value="2" {% if user_review and user_review.rating == 2 %}selected{% endif %}>⭐⭐ (2 - Poor)</option>
+                            <option value="1" {% if user_review and user_review.rating == 1 %}selected{% endif %}>⭐ (1 - Terrible)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">Written Review Comments</label>
+                        <textarea name="review_text" class="form-control" rows="3" placeholder="Share your experience reading this book...">{% if user_review %}{{ user_review.review_text }}{% endif %}</textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 fw-semibold rounded-2">Submit Review</button>
+                </form>
+
+                <div class="mt-4 pt-3 border-top">
+                    <h6 class="fw-bold mb-3">Recent Student Reviews ({{ book.rating_count }})</h6>
+                    {% for rev in book.reviews.limit(5).all() %}
+                        <div class="mb-3 p-2 bg-light rounded-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-semibold text-dark small">{{ rev.student.name }}</span>
+                                <span class="text-warning small font-monospace">★ {{ rev.rating }}.0</span>
+                            </div>
+                            <p class="text-muted small mb-0">{{ rev.review_text }}</p>
+                        </div>
+                    {% else %}
+                        <p class="text-muted small mb-0">No reviews yet for this title.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

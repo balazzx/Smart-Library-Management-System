@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Book Catalog & Smart NLP Search - Smart Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="fw-bold mb-1 text-navy"><i class="fa-solid fa-magnifying-glass text-primary me-2"></i>Smart Book Search Catalog</h3>
+            <p class="text-muted small mb-0">Search over 50+ academic titles using keyword or natural language query</p>
+        </div>
+    </div>
+
+    <!-- Search Form Card -->
+    <div class="card card-custom p-4 shadow-sm border-0 mb-4">
+        <form method="GET" action="{{ url_for('student.search_books') }}">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white text-muted"><i class="fa-solid fa-search"></i></span>
+                        <input type="text" name="q" class="form-control" placeholder="Search title, author, ISBN, or ask NLP question..." value="{{ query }}">
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <select name="category_id" class="form-select">
+                        <option value="">All Categories...</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if selected_category == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3 d-flex gap-2">
+                    <select name="mode" class="form-select">
+                        <option value="standard" {% if mode == 'standard' %}selected{% endif %}>Standard Search</option>
+                        <option value="nlp" {% if mode == 'nlp' %}selected{% endif %}>Smart NLP Search</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold"><i class="fa-solid fa-filter me-1"></i>Search</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Display -->
+    {% if mode == 'nlp' %}
+        <!-- Smart NLP Results List -->
+        <div class="alert alert-info border-0 shadow-sm rounded-3 mb-4">
+            <i class="fa-solid fa-wand-magic-sparkles me-2"></i><strong>Smart NLP Results for:</strong> "{{ query }}" — Ranked by vector similarity match
+        </div>
+
+        <div class="row g-4 mb-4">
+            {% for res in nlp_results %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card card-custom h-100 p-3 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-success font-monospace"><i class="fa-solid fa-check me-1"></i> {{ res.relevance_pct }}% Relevance</span>
+                            <span class="badge bg-light text-dark font-monospace">ISBN: {{ res.book.isbn }}</span>
+                        </div>
+                        <div class="mb-3 text-center">
+                            <img src="{{ url_for('static', filename=res.book.cover_path) }}"
+                                 onerror="this.src='{{ url_for('static', filename='default_cover.jpg') }}'"
+                                 class="book-cover" loading="lazy" alt="{{ res.book.title }} front cover">
+                        </div>
+                        <h5 class="fw-bold text-navy line-clamp-2 mb-1">{{ res.book.title }}</h5>
+                        <p class="text-muted small mb-2"><i class="fa-solid fa-pen-nib me-1"></i> {{ res.book.author.name }} | {{ res.book.category.name }}</p>
+                        <p class="text-secondary small mb-3 line-clamp-2">{{ res.book.description }}</p>
+                        <div class="mt-auto pt-2 border-top d-flex justify-content-between align-items-center">
+                            <small class="text-primary font-monospace" style="font-size: 0.75rem;"><i class="fa-solid fa-lightbulb me-1"></i>{{ res.match_reason }}</small>
+                            <a href="{{ url_for('student.book_details', book_id=res.book.id) }}" class="btn btn-sm btn-outline-primary rounded-2">Details</a>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="col-12 text-center py-5 text-muted">
+                    <i class="fa-solid fa-face-frown fs-1 mb-2 text-secondary"></i>
+                    <p class="mb-0">No matching books found for your query. Try broadening your keywords.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+    {% else %}
+        <!-- Standard Catalog Grid -->
+        <div class="row g-4 mb-4">
+            {% for book in books %}
+                <div class="col-md-4 col-lg-3">
+                    <div class="card card-custom h-100 shadow-sm border-0 rounded-3 overflow-hidden">
+                        <div class="card-body p-3 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-light text-secondary font-monospace">{{ book.category.name }}</span>
+                                {% if book.available_copies_count > 0 %}
+                                    <span class="badge badge-status badge-available">AVAILABLE ({{ book.available_copies_count }})</span>
+                                {% else %}
+                                    <span class="badge badge-status badge-overdue">OUT OF STOCK</span>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3 text-center">
+                                <img src="{{ url_for('static', filename=book.cover_path) }}"
+                                     onerror="this.src='{{ url_for('static', filename='default_cover.jpg') }}'"
+                                     class="book-cover" loading="lazy" alt="{{ book.title }} front cover">
+                            </div>
+
+                            <h6 class="fw-bold text-navy line-clamp-2 mb-1">{{ book.title }}</h6>
+                            <p class="text-muted small mb-2"><i class="fa-solid fa-user me-1"></i> {{ book.author.name }}</p>
+
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="text-warning me-2" style="font-size: 0.85rem;">
+                                    <i class="fa-solid fa-star"></i> <strong>{{ book.average_rating }}</strong>
+                                </div>
+                                <span class="text-muted small">({{ book.rating_count }} reviews)</span>
+                            </div>
+
+                            <div class="mt-auto pt-2 border-top">
+                                <a href="{{ url_for('student.book_details', book_id=book.id) }}" class="btn btn-sm btn-primary w-100 rounded-2">
+                                    <i class="fa-solid fa-book-open me-1"></i> Book Details & Request
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="col-12 text-center py-5 text-muted">
+                    <i class="fa-solid fa-book-open fs-1 mb-2 text-secondary"></i>
+                    <p class="mb-0">No books found matching criteria.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if pagination and pagination.pages > 1 %}
+            <nav class="d-flex justify-content-center">
+                <ul class="pagination">
+                    {% if pagination.has_prev %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('student.search_books', page=pagination.prev_num, q=query, category_id=selected_category) }}">Previous</a></li>
+                    {% endif %}
+                    {% for p in pagination.iter_pages() %}
+                        {% if p %}
+                            <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('student.search_books', page=p, q=query, category_id=selected_category) }}">{{ p }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if pagination.has_next %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('student.search_books', page=pagination.next_num, q=query, category_id=selected_category) }}">Next</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

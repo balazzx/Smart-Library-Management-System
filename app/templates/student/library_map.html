@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Interactive Library Shelf Map - Smart Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="mb-4">
+        <h3 class="fw-bold mb-1 text-navy"><i class="fa-solid fa-map-location-dot text-primary me-2"></i>Visual Library Shelf & Rack Map</h3>
+        <p class="text-muted mb-0">Locate book shelves, racks, and physical department sections across campus blocks</p>
+    </div>
+
+    <div class="card card-custom p-4 shadow-sm border-0 mb-4">
+        <form method="GET" action="{{ url_for('student.library_map') }}" class="row g-3 align-items-end">
+            <div class="col-md-10">
+                <label for="book_id" class="form-label fw-semibold">Select a book to locate</label>
+                <select id="book_id" name="book_id" class="form-select">
+                    <option value="">Choose a catalog book...</option>
+                    {% for book in books %}
+                        <option value="{{ book.id }}" {% if selected_book and selected_book.id == book.id %}selected{% endif %}>{{ book.title }} ({{ book.isbn }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Locate</button></div>
+        </form>
+    </div>
+
+    {% if selected_book %}
+    <div class="card card-custom p-4 shadow-sm border-0 mb-4">
+        <div class="row g-4 align-items-start">
+            <div class="col-md-3 text-center">
+                {% if selected_book.cover_path or selected_book.cover_url %}
+                    <img src="{{ url_for('static', filename=selected_book.cover_path) if selected_book.cover_path else selected_book.cover_url }}" class="book-cover book-cover-detail" loading="lazy" alt="{{ selected_book.title }} front cover">
+                {% else %}
+                    <div class="book-cover book-cover-detail book-cover-missing"><i class="fa-solid fa-book-open fs-1"></i><span>Cover unavailable</span></div>
+                {% endif %}
+            </div>
+            <div class="col-md-9">
+                <h4 class="fw-bold text-navy">{{ selected_book.title }}</h4>
+                <p class="text-muted mb-3">{{ selected_book.author.name }} | ISBN: {{ selected_book.isbn }}</p>
+                <div class="row g-2 small">
+                    <div class="col-sm-6"><strong>Access No.:</strong> {{ selected_book.access_no or 'See physical copies' }}</div>
+                    <div class="col-sm-6"><strong>Status:</strong> {{ selected_book.available_copies_count }} available / {{ selected_book.total_copies_count }} total</div>
+                    {% if selected_book.location %}
+                        <div class="col-12"><strong>Location:</strong> {{ selected_book.location.display_name }}</div>
+                    {% endif %}
+                </div>
+                <div class="table-responsive mt-3"><table class="table table-sm table-bordered mb-0"><thead><tr><th>Access No.</th><th>Status</th><th>Location</th></tr></thead><tbody>
+                    {% for copy in selected_book.copies.all() %}<tr><td class="font-monospace">{{ copy.copy_code }}</td><td>{{ copy.status }}</td><td>{{ copy.location.display_name if copy.location else 'Unassigned' }}</td></tr>{% endfor %}
+                </tbody></table></div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card card-custom p-4 shadow-sm border-0 border-top border-4 border-primary">
+                <h5 class="fw-bold text-navy mb-2"><i class="fa-solid fa-laptop-code me-2 text-primary"></i>CSE & IT Block</h5>
+                <p class="text-muted small mb-3">Floor 2 | Section Programming & Databases</p>
+                <div class="d-flex justify-content-between p-2 bg-light rounded mb-2 font-monospace small">
+                    <span>Rack R01 (Shelf S01 - S04)</span>
+                    <span class="badge bg-primary">Python / Java</span>
+                </div>
+                <div class="d-flex justify-content-between p-2 bg-light rounded font-monospace small">
+                    <span>Rack R02 (Shelf S01 - S03)</span>
+                    <span class="badge bg-primary">Databases & SQL</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card card-custom p-4 shadow-sm border-0 border-top border-4 border-success">
+                <h5 class="fw-bold text-navy mb-2"><i class="fa-solid fa-brain me-2 text-success"></i>AI & DS Block</h5>
+                <p class="text-muted small mb-3">Floor 3 | Section Artificial Intelligence & ML</p>
+                <div class="d-flex justify-content-between p-2 bg-light rounded mb-2 font-monospace small">
+                    <span>Rack R02 (Shelf S01 - S04)</span>
+                    <span class="badge bg-success">Neural Nets & PyTorch</span>
+                </div>
+                <div class="d-flex justify-content-between p-2 bg-light rounded font-monospace small">
+                    <span>Rack R03 (Shelf S01 - S02)</span>
+                    <span class="badge bg-success">Data Science</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card card-custom p-4 shadow-sm border-0 border-top border-4 border-warning">
+                <h5 class="fw-bold text-navy mb-2"><i class="fa-solid fa-microchip me-2 text-warning"></i>ECE & EEE Block</h5>
+                <p class="text-muted small mb-3">Floor 2 | Section Electronics & Robotics</p>
+                <div class="d-flex justify-content-between p-2 bg-light rounded mb-2 font-monospace small">
+                    <span>Rack R04 (Shelf S01 - S03)</span>
+                    <span class="badge bg-warning text-dark">Microprocessors</span>
+                </div>
+                <div class="d-flex justify-content-between p-2 bg-light rounded font-monospace small">
+                    <span>Rack R05 (Shelf S01 - S04)</span>
+                    <span class="badge bg-warning text-dark">Embedded Systems</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visual Interactive Grid -->
+    <div class="card card-custom p-4 shadow-sm border-0">
+        <h5 class="fw-bold text-navy mb-3"><i class="fa-solid fa-border-all me-2 text-primary"></i>Central Library Floor Layout Grid</h5>
+        <div class="row g-2 text-center font-monospace">
+            <div class="col-3"><div class="p-4 bg-primary text-white rounded-3">ENTRANCE & DESK</div></div>
+            <div class="col-6"><div class="p-4 bg-light text-dark rounded-3 border border-2 border-dashed">READING HALL & STUDY CUBICLES</div></div>
+            <div class="col-3"><div class="p-4 bg-secondary text-white rounded-3">DIGITAL KIOSK</div></div>
+
+            <div class="col-4 mt-3"><div class="p-3 bg-dark text-white rounded-3">RACK R01 - R03<br><small class="text-info">CSE & IT</small></div></div>
+            <div class="col-4 mt-3"><div class="p-3 bg-dark text-white rounded-3">RACK R04 - R06<br><small class="text-success">AI, DS & CSBS</small></div></div>
+            <div class="col-4 mt-3"><div class="p-3 bg-dark text-white rounded-3">RACK R07 - R10<br><small class="text-warning">ECE, EEE, MECH, CIVIL</small></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}

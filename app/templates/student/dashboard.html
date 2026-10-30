@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard - Smart Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1 text-navy">Welcome back, {{ student.name }}!</h3>
+            <p class="text-muted mb-0"><i class="fa-solid fa-graduation-cap me-1 text-primary"></i> Department of {{ student.department.name }} | Roll ID: <strong>{{ student.student_id }}</strong></p>
+        </div>
+        <div>
+            <a href="{{ url_for('student.search_books') }}" class="btn btn-primary rounded-pill shadow-sm"><i class="fa-solid fa-magnifying-glass me-2"></i>Search Book Catalog</a>
+        </div>
+    </div>
+
+    <!-- KPI Summary Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4 col-lg-2">
+            <div class="card card-custom p-3 kpi-card">
+                <div class="kpi-title">Active Borrows</div>
+                <div class="kpi-value text-primary">{{ current_books_count }} / {{ student.max_borrow_limit }}</div>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg-2">
+            <div class="card card-custom p-3 kpi-card kpi-warning">
+                <div class="kpi-title">Due Soon</div>
+                <div class="kpi-value text-warning">{{ due_soon_count }}</div>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg-2">
+            <div class="card card-custom p-3 kpi-card kpi-danger">
+                <div class="kpi-title">Overdue</div>
+                <div class="kpi-value text-danger">{{ overdue_count }}</div>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg-2">
+            <div class="card card-custom p-3 kpi-card kpi-success">
+                <div class="kpi-title">Pending Requests</div>
+                <div class="kpi-value text-success">{{ pending_requests_count }}</div>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg-2">
+            <div class="card card-custom p-3 kpi-card">
+                <div class="kpi-title">Wishlist</div>
+                <div class="kpi-value text-dark">{{ wishlist_count }}</div>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg-2">
+            <div class="card card-custom p-3 kpi-card kpi-danger">
+                <div class="kpi-title">Fines Due</div>
+                <div class="kpi-value text-danger">₹{{ "%.2f"|format(total_fines_due) }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Books & AI Recommendations Row -->
+    <div class="row g-4 mb-4">
+        <!-- Currently Borrowed Books Table -->
+        <div class="col-lg-8">
+            <div class="card card-custom p-4 shadow-sm border-0 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0 text-navy"><i class="fa-solid fa-book-open me-2 text-primary"></i>Currently Borrowed Books</h5>
+                    <a href="{{ url_for('student.my_books') }}" class="btn btn-sm btn-outline-primary rounded-pill">View All History</a>
+                </div>
+
+                {% if active_borrows %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Cover</th>
+                                    <th>Book Copy</th>
+                                    <th>Title</th>
+                                    <th>Issue Date</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tx in active_borrows %}
+                                    <tr>
+                                        <td>
+                                            <img src="{{ url_for('static', filename=tx.copy.book.cover_path) }}"
+                                                 onerror="this.src='{{ url_for('static', filename='default_cover.jpg') }}'"
+                                                 class="book-cover-sm" alt="{{ tx.copy.book.title }} cover">
+                                        </td>
+                                        <td><span class="badge bg-secondary font-monospace">{{ tx.copy.copy_code }}</span></td>
+                                        <td class="fw-semibold">
+                                            <a href="{{ url_for('student.book_details', book_id=tx.copy.book.id) }}" class="text-navy text-decoration-none fw-bold">
+                                                {{ tx.copy.book.title }}
+                                            </a>
+                                        </td>
+                                        <td class="text-muted small">{{ tx.issue_date.strftime('%Y-%m-%d') }}</td>
+                                        <td class="small {% if tx.is_overdue %}text-danger fw-bold{% else %}text-dark{% endif %}">
+                                            {{ tx.due_date.strftime('%Y-%m-%d') }}
+                                        </td>
+                                        <td>
+                                            {% if tx.is_overdue %}
+                                                <span class="badge badge-status badge-overdue">OVERDUE</span>
+                                            {% else %}
+                                                <span class="badge badge-status badge-issued">ISSUED</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fa-solid fa-book-bookmark fs-2 mb-2 d-block text-secondary"></i>
+                        No active book loans at present.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Announcements Widget -->
+        <div class="col-lg-4">
+            <div class="card card-custom p-4 shadow-sm border-0 h-100">
+                <h5 class="fw-bold mb-3 text-navy"><i class="fa-solid fa-bullhorn me-2 text-warning"></i>Announcements</h5>
+                {% if announcements %}
+                    <div class="list-group list-group-flush">
+                        {% for a in announcements %}
+                            <div class="list-group-item px-0 py-2 border-0 border-bottom">
+                                <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+                                    <h6 class="mb-0 fw-semibold text-dark">{{ a.title }}</h6>
+                                    <span class="badge bg-{% if a.priority == 'URGENT' %}danger{% elif a.priority == 'HIGH' %}warning text-dark{% else %}info{% endif %} font-monospace" style="font-size: 0.65rem;">{{ a.priority }}</span>
+                                </div>
+                                <p class="text-muted small mb-1">{{ a.message }}</p>
+                                <small class="text-secondary" style="font-size: 0.75rem;">{{ a.start_date.strftime('%b %d') }} - {{ a.end_date.strftime('%b %d, %Y') }}</small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted small mb-0">No active campus announcements.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Recommended Books Row -->
+    <div class="card card-custom p-4 shadow-sm border-0 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="fw-bold mb-0 text-navy"><i class="fa-solid fa-wand-magic-sparkles me-2 text-primary"></i>AI Recommended For You</h5>
+                <p class="text-muted small mb-0">Personalized content-based recommendations powered by TF-IDF & Cosine Similarity</p>
+            </div>
+            <a href="{{ url_for('student.recommendations') }}" class="btn btn-sm btn-outline-primary rounded-pill">Explore All</a>
+        </div>
+
+        <div class="row g-3">
+            {% for rec in recommendations %}
+                <div class="col-md-6 col-lg-3">
+                    <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden">
+                        <div class="card-body p-3 d-flex flex-column text-center">
+                            <span class="badge bg-light text-primary align-self-center mb-2 font-monospace" style="font-size: 0.7rem;"><i class="fa-solid fa-fire me-1"></i> {{ rec.confidence|default(90) }}% Match</span>
+                            <div class="mb-2">
+                                <img src="{{ url_for('static', filename=rec.book.cover_path) }}"
+                                     onerror="this.src='{{ url_for('static', filename='default_cover.jpg') }}'"
+                                     class="book-cover-thumb mx-auto d-block" alt="{{ rec.book.title }} cover">
+                            </div>
+                            <h6 class="fw-bold text-navy mb-1 line-clamp-2">{{ rec.book.title }}</h6>
+                            <p class="text-muted small mb-2"><i class="fa-solid fa-pen-nib me-1"></i> {{ rec.book.author.name }}</p>
+                            <div class="mt-auto pt-2 border-top">
+                                <small class="text-secondary d-block mb-2 line-clamp-2" style="font-size: 0.75rem;"><i class="fa-solid fa-circle-info text-primary me-1"></i> {{ rec.reason }}</small>
+                                <a href="{{ url_for('student.book_details', book_id=rec.book.id) }}" class="btn btn-sm btn-primary w-100 rounded-2">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

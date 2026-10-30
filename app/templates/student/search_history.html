@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Search History — KIOT Central Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1 text-navy"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i>My Search History</h3>
+            <p class="text-muted mb-0">Your private record of library catalog searches and clicked titles</p>
+        </div>
+        {% if history_items %}
+        <form method="POST" action="{{ url_for('student.clear_search_history') }}" onsubmit="return confirm('Clear all your search history?');">
+            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill">
+                <i class="fa-solid fa-trash-can me-1"></i> Clear All Search History
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    <div class="card card-custom p-4 border-0 shadow-sm">
+        {% if history_items %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light font-monospace small">
+                    <tr>
+                        <th>Search Query</th>
+                        <th>Results Found</th>
+                        <th>Book Selected</th>
+                        <th>Date & Time</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in history_items %}
+                    <tr>
+                        <td>
+                            <div class="fw-semibold text-navy">
+                                <i class="fa-solid fa-magnifying-glass text-muted me-2 small"></i>
+                                "{{ item.query_text }}"
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border font-monospace">{{ item.result_count }} Matches</span>
+                        </td>
+                        <td>
+                            {% if item.selected_book %}
+                                <a href="{{ url_for('student.book_details', book_id=item.selected_book.id) }}" class="text-primary text-decoration-none small fw-semibold">
+                                    <i class="fa-solid fa-book me-1"></i>{{ item.selected_book.title }}
+                                </a>
+                            {% else %}
+                                <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="small text-muted font-monospace">
+                            {{ item.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{{ url_for('student.search_books', q=item.query_text) }}" class="btn btn-sm btn-outline-primary rounded-pill py-0 px-2" title="Search Again">
+                                    <i class="fa-solid fa-rotate me-1"></i> Re-search
+                                </a>
+                                <form method="POST" action="{{ url_for('student.delete_search_history_item', history_id=item.id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill py-0 px-2" title="Delete entry">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fa-solid fa-magnifying-glass text-muted fs-1 mb-3"></i>
+            <h5 class="fw-bold text-navy">No Search History Yet</h5>
+            <p class="text-muted mb-3">When you search the library catalog, your queries will appear here for easy access.</p>
+            <a href="{{ url_for('student.search_books') }}" class="btn btn-primary rounded-pill">
+                <i class="fa-solid fa-book me-1"></i> Browse Catalog
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

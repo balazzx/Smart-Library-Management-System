@@ -1,0 +1,138 @@
+<nav id="sidebar">
+    <div class="sidebar-header">
+        <h6 class="text-uppercase text-muted mb-0 font-monospace fs-7">Portal Navigation</h6>
+        <div class="fw-bold fs-6 text-white">{{ current_user.role }} PORTAL</div>
+    </div>
+
+    <ul class="list-unstyled components">
+        {% if current_user.role == 'STUDENT' %}
+            <li class="{% if request.endpoint == 'student.dashboard' %}active{% endif %}">
+                <a href="{{ url_for('student.dashboard') }}"><i class="fa-solid fa-house"></i> Dashboard</a>
+            </li>
+            <li class="{% if request.endpoint == 'student.search_books' %}active{% endif %}">
+                <a href="{{ url_for('student.search_books') }}"><i class="fa-solid fa-magnifying-glass"></i> Search Books & NLP</a>
+            </li>
+            <li class="{% if request.endpoint == 'student.search_history' %}active{% endif %}">
+                <a href="{{ url_for('student.search_history') }}"><i class="fa-solid fa-clock-rotate-left"></i> Search History</a>
+            </li>
+            <li class="{% if request.endpoint == 'student.my_books' %}active{% endif %}">
+                <a href="{{ url_for('student.my_books') }}"><i class="fa-solid fa-book-open"></i> My Borrowed Books</a>
+            </li>
+            <li class="{% if request.endpoint == 'student.requests_page' %}active{% endif %}">
+                <a href="{{ url_for('student.requests_page') }}"><i class="fa-solid fa-paper-plane"></i> My Requests</a>
+            </li>
+            <li class="{% if request.endpoint == 'student.reservations' %}active{% endif %}">
+                <a href="{{ url_for('student.reservations') }}"><i class="fa-solid fa-clock"></i> Reservations & Queue</a>
+            </li>
+            <li class="{% if request.endpoint == 'student.wishlist' %}active{% endif %}">
+                <a href="{{ url_for('student.wishlist') }}"><i class="fa-solid fa-heart"></i> Wishlist</a>
+            </li>
+            <li class="{% if request.endpoint == 'student.recommendations' %}active{% endif %}">
+                <a href="{{ url_for('student.recommendations') }}"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Recommendations</a>
+            </li>
+            <li class="{% if request.endpoint == 'student.analytics' %}active{% endif %}">
+                <a href="{{ url_for('student.analytics') }}"><i class="fa-solid fa-chart-line"></i> Reading Analytics</a>
+            </li>
+            <li class="{% if request.endpoint == 'student.digital_library' %}active{% endif %}">
+                <a href="{{ url_for('student.digital_library') }}"><i class="fa-solid fa-file-pdf"></i> Digital Library</a>
+            </li>
+            <li class="{% if request.endpoint == 'student.digital_card' %}active{% endif %}">
+                <a href="{{ url_for('student.digital_card') }}"><i class="fa-solid fa-id-card"></i> Digital Library Card</a>
+            </li>
+            <li class="{% if request.endpoint == 'student.library_map' %}active{% endif %}">
+                <a href="{{ url_for('student.library_map') }}"><i class="fa-solid fa-map-location-dot"></i> Library Shelf Map</a>
+            </li>
+            <li class="{% if request.endpoint == 'student.profile' %}active{% endif %}">
+                <a href="{{ url_for('student.profile') }}"><i class="fa-solid fa-user-pen"></i> My Profile</a>
+            </li>
+
+        {% elif current_user.role == 'LIBRARIAN' %}
+            <li class="{% if request.endpoint == 'librarian.dashboard' %}active{% endif %}">
+                <a href="{{ url_for('librarian.dashboard') }}"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+            </li>
+            <li class="{% if request.endpoint in ['librarian.books', 'librarian.add_book', 'librarian.edit_book', 'librarian.book_copies'] %}active{% endif %}">
+                <a href="{{ url_for('librarian.books') }}"><i class="fa-solid fa-book"></i> Book Catalog</a>
+            </li>
+            <li class="{% if request.endpoint in ['librarian.cover_management', 'librarian.zip_cover_upload', 'librarian.cover_reconciliation'] %}active{% endif %}">
+                <a href="{{ url_for('librarian.cover_management') }}"><i class="fa-solid fa-image"></i> Cover Management</a>
+            </li>
+            <li class="{% if request.endpoint == 'librarian.requests_list' %}active{% endif %}">
+                <a href="{{ url_for('librarian.requests_list') }}"><i class="fa-solid fa-clock-rotate-left"></i> Book Requests</a>
+            </li>
+            <li class="{% if request.endpoint == 'librarian.issue_book' %}active{% endif %}">
+                <a href="{{ url_for('librarian.issue_book') }}"><i class="fa-solid fa-hand-holding-hand"></i> Issue Book</a>
+            </li>
+            <li class="{% if request.endpoint == 'librarian.return_book' %}active{% endif %}">
+                <a href="{{ url_for('librarian.return_book') }}"><i class="fa-solid fa-rotate-left"></i> Return Book</a>
+            </li>
+            <li class="{% if request.endpoint == 'librarian.fines_list' %}active{% endif %}">
+                <a href="{{ url_for('librarian.fines_list') }}"><i class="fa-solid fa-receipt"></i> Fines Management</a>
+            </li>
+            <li class="{% if request.endpoint == 'librarian.authors' %}active{% endif %}">
+                <a href="{{ url_for('librarian.authors') }}"><i class="fa-solid fa-feather"></i> Authors</a>
+            </li>
+            <li class="{% if request.endpoint == 'librarian.categories' %}active{% endif %}">
+                <a href="{{ url_for('librarian.categories') }}"><i class="fa-solid fa-layer-group"></i> Categories</a>
+            </li>
+            <li class="{% if request.endpoint == 'librarian.publishers' %}active{% endif %}">
+                <a href="{{ url_for('librarian.publishers') }}"><i class="fa-solid fa-building"></i> Publishers</a>
+            </li>
+            <li class="{% if request.endpoint in ['librarian.locations', 'librarian.location_reconciliation'] %}active{% endif %}">
+                <a href="{{ url_for('librarian.locations') }}"><i class="fa-solid fa-map-location-dot"></i> Smart Locations</a>
+            </li>
+            <li class="{% if request.endpoint == 'librarian.location_reconciliation' %}active{% endif %}">
+                <a href="{{ url_for('librarian.location_reconciliation') }}"><i class="fa-solid fa-map-location-dot"></i> Location Reconciliation</a>
+            </li>
+            <li class="{% if request.endpoint == 'librarian.digital_resources' %}active{% endif %}">
+                <a href="{{ url_for('librarian.digital_resources') }}"><i class="fa-solid fa-cloud-arrow-up"></i> Digital Resources</a>
+            </li>
+            <li class="{% if request.endpoint == 'librarian.announcements' %}active{% endif %}">
+                <a href="{{ url_for('librarian.announcements') }}"><i class="fa-solid fa-bullhorn"></i> Announcements</a>
+            </li>
+            <li class="{% if request.endpoint == 'librarian.reports' %}active{% endif %}">
+                <a href="{{ url_for('librarian.reports') }}"><i class="fa-solid fa-file-export"></i> Reports & Export</a>
+            </li>
+            <li class="{% if request.endpoint == 'librarian.email_logs' %}active{% endif %}">
+                <a href="{{ url_for('librarian.email_logs') }}"><i class="fa-solid fa-envelope"></i> Email Logs</a>
+            </li>
+            <li class="{% if request.endpoint == 'librarian.profile' %}active{% endif %}">
+                <a href="{{ url_for('librarian.profile') }}"><i class="fa-solid fa-user-tie"></i> Librarian Profile</a>
+            </li>
+
+        {% elif current_user.role == 'ADMIN' %}
+            <li class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                <a href="{{ url_for('admin.dashboard') }}"><i class="fa-solid fa-chart-pie"></i> Admin Control Panel</a>
+            </li>
+            <li class="{% if request.endpoint == 'admin.users' %}active{% endif %}">
+                <a href="{{ url_for('admin.users') }}"><i class="fa-solid fa-users-gear"></i> User Accounts & Roles</a>
+            </li>
+            <li class="{% if request.endpoint == 'admin.data_management' %}active{% endif %}">
+                <a href="{{ url_for('admin.data_management') }}"><i class="fa-solid fa-file-excel"></i> Data Management</a>
+            </li>
+            <li class="{% if request.endpoint == 'admin.data_quality' %}active{% endif %}">
+                <a href="{{ url_for('admin.data_quality') }}"><i class="fa-solid fa-stethoscope"></i> Data Quality Checker</a>
+            </li>
+            <li class="{% if request.endpoint == 'admin.ml_demand' %}active{% endif %}">
+                <a href="{{ url_for('admin.ml_demand') }}"><i class="fa-solid fa-brain"></i> ML Demand Prediction</a>
+            </li>
+            <li class="{% if request.endpoint == 'admin.acquisition_insights' %}active{% endif %}">
+                <a href="{{ url_for('admin.acquisition_insights') }}"><i class="fa-solid fa-lightbulb"></i> Acquisition Insights</a>
+            </li>
+            <li class="{% if request.endpoint == 'admin.email_center' %}active{% endif %}">
+                <a href="{{ url_for('admin.email_center') }}"><i class="fa-solid fa-paper-plane"></i> Email Center</a>
+            </li>
+            <li class="{% if request.endpoint == 'admin.settings' %}active{% endif %}">
+                <a href="{{ url_for('admin.settings') }}"><i class="fa-solid fa-gears"></i> System Settings</a>
+            </li>
+            <li class="{% if request.endpoint == 'admin.search_history' %}active{% endif %}">
+                <a href="{{ url_for('admin.search_history') }}"><i class="fa-solid fa-clock-rotate-left"></i> Search History</a>
+            </li>
+            <li class="{% if request.endpoint == 'librarian.audit_logs' %}active{% endif %}">
+                <a href="{{ url_for('librarian.audit_logs') }}"><i class="fa-solid fa-shield-halved"></i> Audit Logs</a>
+            </li>
+            <li class="{% if request.endpoint == 'admin.profile' %}active{% endif %}">
+                <a href="{{ url_for('admin.profile') }}"><i class="fa-solid fa-user-gear"></i> Admin Profile</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>

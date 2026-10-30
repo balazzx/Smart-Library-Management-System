@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}AI Book Recommendations - Smart Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="mb-4">
+        <h3 class="fw-bold mb-1 text-navy"><i class="fa-solid fa-wand-magic-sparkles text-primary me-2"></i>AI Recommendation Engine</h3>
+        <p class="text-muted mb-0">Personalized content-based matching derived from your borrow history, ratings, and wishlist</p>
+    </div>
+
+    <div class="row g-4">
+        {% for rec in recommendations %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card card-custom h-100 p-4 shadow-sm border-0 rounded-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge bg-primary font-monospace">{{ rec.book.category.name }}</span>
+                        <span class="badge bg-light text-primary font-monospace fs-7"><i class="fa-solid fa-bolt me-1"></i>{{ rec.confidence }}% Match</span>
+                    </div>
+                    <div class="text-center mb-3">
+                        <img src="{{ url_for('static', filename=rec.book.cover_path) }}"
+                             onerror="this.src='{{ url_for('static', filename='default_cover.jpg') }}'"
+                             class="book-cover mx-auto" alt="{{ rec.book.title }} cover">
+                    </div>
+                    <h5 class="fw-bold text-navy line-clamp-2 mb-1 text-center">{{ rec.book.title }}</h5>
+                    <p class="text-muted small mb-3 text-center"><i class="fa-solid fa-pen-nib me-1"></i> {{ rec.book.author.name }}</p>
+                    <p class="text-secondary small mb-3 leading-relaxed line-clamp-3">{{ rec.book.description }}</p>
+
+                    <div class="p-2.5 bg-light rounded-3 mb-3 border-start border-3 border-primary">
+                        <small class="text-primary fw-semibold d-block" style="font-size: 0.75rem;"><i class="fa-solid fa-circle-info me-1"></i>Why Recommended:</small>
+                        <small class="text-dark d-block">{{ rec.reason }}</small>
+                    </div>
+
+                    <div class="mt-auto pt-2 border-top">
+                        <a href="{{ url_for('student.book_details', book_id=rec.book.id) }}" class="btn btn-primary w-100 rounded-pill font-semibold">
+                            <i class="fa-solid fa-book-open me-1"></i> View & Request Book
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

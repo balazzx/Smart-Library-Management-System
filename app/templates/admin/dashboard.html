@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Control Panel — KIOT Central Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="mb-4">
+        <h3 class="fw-bold mb-1 text-navy"><i class="fa-solid fa-chart-pie text-primary me-2"></i>Admin Master Control Panel</h3>
+        <p class="text-muted mb-0">KIOT Central Library — System administration, analytics, ML forecasting, and operational configuration</p>
+    </div>
+
+    <!-- Admin KPI Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card card-custom p-3 kpi-card">
+                <div class="kpi-title"><i class="fa-solid fa-users me-1"></i> Total Registered Users</div>
+                <div class="kpi-value text-primary">{{ total_users }}</div>
+                <small class="text-muted">Students + Staff</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-custom p-3 kpi-card kpi-success">
+                <div class="kpi-title"><i class="fa-solid fa-user-graduate me-1"></i> Student Accounts</div>
+                <div class="kpi-value text-success">{{ total_students }}</div>
+                <small class="text-muted">Active learners</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-custom p-3 kpi-card kpi-warning">
+                <div class="kpi-title"><i class="fa-solid fa-book me-1"></i> Total Book Titles</div>
+                <div class="kpi-value text-warning">{{ total_books }}</div>
+                <small class="text-muted">In catalog</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-custom p-3 kpi-card kpi-danger">
+                <div class="kpi-title"><i class="fa-solid fa-landmark me-1"></i> Borrow Transactions</div>
+                <div class="kpi-value text-dark">{{ total_transactions }}</div>
+                <small class="text-muted">All time</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="card card-custom p-3 border-0 shadow-sm">
+                <h6 class="fw-bold text-navy mb-3"><i class="fa-solid fa-bolt me-2 text-warning"></i>Quick Admin Actions</h6>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary btn-sm rounded-pill"><i class="fa-solid fa-users me-1"></i> Manage Users</a>
+                    <a href="{{ url_for('admin.data_management') }}" class="btn btn-outline-success btn-sm rounded-pill"><i class="fa-solid fa-database me-1"></i> Data Management</a>
+                    <a href="{{ url_for('admin.data_quality') }}" class="btn btn-outline-warning btn-sm rounded-pill"><i class="fa-solid fa-shield-halved me-1"></i> Data Quality</a>
+                    <a href="{{ url_for('admin.email_center') }}" class="btn btn-outline-info btn-sm rounded-pill"><i class="fa-solid fa-envelope me-1"></i> Email Center</a>
+                    <a href="{{ url_for('admin.ml_demand') }}" class="btn btn-outline-secondary btn-sm rounded-pill"><i class="fa-solid fa-brain me-1"></i> ML Demand</a>
+                    <a href="{{ url_for('admin.acquisition_insights') }}" class="btn btn-outline-secondary btn-sm rounded-pill"><i class="fa-solid fa-chart-line me-1"></i> Acquisition Insights</a>
+                    <a href="{{ url_for('admin.system_health') }}" class="btn btn-outline-danger btn-sm rounded-pill"><i class="fa-solid fa-heart-pulse me-1"></i> System Health</a>
+                    <a href="{{ url_for('admin.settings') }}" class="btn btn-outline-dark btn-sm rounded-pill"><i class="fa-solid fa-gear me-1"></i> Settings</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Charts Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card card-custom p-4 shadow-sm border-0">
+                <h5 class="fw-bold text-navy mb-3"><i class="fa-solid fa-chart-bar me-2 text-primary"></i>Department Borrowing Distribution</h5>
+                <canvas id="deptChart" height="200"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card card-custom p-4 shadow-sm border-0">
+                <h5 class="fw-bold text-navy mb-3"><i class="fa-solid fa-chart-line me-2 text-primary"></i>Monthly Issue & Return Trends</h5>
+                <canvas id="monthlyTrendChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Security Audit Log -->
+    <div class="card card-custom p-4 shadow-sm border-0">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold text-navy mb-0"><i class="fa-solid fa-shield-halved me-2 text-primary"></i>Recent System Security Audit Log</h5>
+            <small class="text-muted">Last {{ recent_audits|length }} actions</small>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 small">
+                <thead class="table-light">
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in recent_audits %}
+                        <tr>
+                            <td class="font-monospace text-muted">{{ a.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td class="fw-semibold">{{ a.user.username if a.user else '—' }}</td>
+                            <td><span class="badge bg-primary font-monospace">{{ a.role or '—' }}</span></td>
+                            <td><span class="badge bg-light text-dark font-monospace border">{{ a.action }}</span></td>
+                            <td class="text-secondary">{{ a.description or '—' }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    fetch('/api/analytics/departments')
+        .then(r => r.json())
+        .then(data => {
+            const colors = ['#2563EB','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#14B8A6','#F97316','#6B7280'];
+            new Chart(document.getElementById('deptChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Borrow Transactions',
+                        data: data.data,
+                        backgroundColor: colors.slice(0, data.labels.length)
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }).catch(() => {});
+
+    fetch('/api/analytics/monthly')
+        .then(r => r.json())
+        .then(data => {
+            new Chart(document.getElementById('monthlyTrendChart'), {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        { label: 'Issues', data: data.issues, borderColor: '#2563EB', backgroundColor: 'rgba(37,99,235,0.1)', fill: true, tension: 0.4 },
+                        { label: 'Returns', data: data.returns, borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.4 }
+                    ]
+                },
+                options: {
+                    plugins: { legend: { position: 'top' } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }).catch(() => {});
+});
+</script>
+{% endblock %}

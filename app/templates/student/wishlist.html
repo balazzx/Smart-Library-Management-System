@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}My Wishlist - Smart Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h3 class="fw-bold mb-3 text-navy"><i class="fa-solid fa-heart text-danger me-2"></i>My Book Wishlist</h3>
+
+    <div class="row g-4">
+        {% for item in items %}
+            <div class="col-md-6 col-lg-3">
+                <div class="card card-custom h-100 shadow-sm p-3 border-0 rounded-4">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-light text-secondary font-monospace">{{ item.book.category.name }}</span>
+                        {% if item.book.available_copies_count > 0 %}
+                            <span class="badge badge-status badge-available">AVAILABLE</span>
+                        {% else %}
+                            <span class="badge badge-status badge-overdue">OUT OF STOCK</span>
+                        {% endif %}
+                    </div>
+                    <div class="my-2 text-center">
+                        <img src="{{ url_for('static', filename=item.book.cover_path) }}"
+                             onerror="this.src='{{ url_for('static', filename='default_cover.jpg') }}'"
+                             class="book-cover mx-auto" alt="{{ item.book.title }} cover">
+                    </div>
+                    <h6 class="fw-bold text-navy line-clamp-2 mb-1 mt-2 text-center">{{ item.book.title }}</h6>
+                    <p class="text-muted small mb-2 text-center"><i class="fa-solid fa-user me-1"></i> {{ item.book.author.name }}</p>
+                    <div class="mt-auto pt-2 border-top d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('student.book_details', book_id=item.book.id) }}" class="btn btn-sm btn-primary rounded-pill px-3">Details</a>
+                        <form method="POST" action="{{ url_for('student.toggle_wishlist', book_id=item.book.id) }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"><i class="fa-solid fa-trash me-1"></i>Remove</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12 text-center py-5 text-muted">
+                <i class="fa-regular fa-heart fs-1 text-secondary mb-2"></i>
+                <p class="mb-0">Your wishlist is currently empty.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

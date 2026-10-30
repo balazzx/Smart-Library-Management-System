@@ -1,0 +1,87 @@
+<nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+    <div class="container-fluid">
+        <!-- Brand / Logo -->
+        <a class="navbar-brand d-flex align-items-center" href="/">
+            <img src="{{ url_for('static', filename='uploads/kiot_logo.jpg') }}"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                 class="brand-logo me-2" alt="KIOT Logo">
+            <div class="brand-logo me-2 d-none align-items-center justify-content-center"
+                 style="width:36px;height:36px;background:rgba(245,158,11,0.2);border-radius:8px;border:2px solid rgba(245,158,11,0.4);">
+                <i class="fa-solid fa-book-bookmark text-warning fs-5"></i>
+            </div>
+            <div class="brand-title">
+                <span>KIOT Central Library</span>
+                <span>Smart Library & Analytics System</span>
+            </div>
+        </a>
+
+        <div class="d-flex align-items-center ms-auto gap-2">
+            {% if current_user %}
+                <!-- Notification Bell -->
+                <a href="{% if current_user.role == 'STUDENT' %}{{ url_for('student.notifications') }}{% else %}#{% endif %}"
+                   class="btn btn-link text-white position-relative text-decoration-none p-2"
+                   title="Notifications">
+                    <i class="fa-regular fa-bell fs-5"></i>
+                    {% if unread_notifications_count > 0 %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                              style="font-size:0.6rem; min-width:18px; padding:3px 5px;">
+                            {{ unread_notifications_count if unread_notifications_count <= 9 else '9+' }}
+                        </span>
+                    {% endif %}
+                </a>
+
+                <!-- Role Badge -->
+                <span class="nav-pill-badge d-none d-md-inline-block">
+                    <i class="fa-solid fa-{% if current_user.role == 'ADMIN' %}crown{% elif current_user.role == 'LIBRARIAN' %}user-tie{% else %}graduation-cap{% endif %} me-1"></i>
+                    {{ current_user.role }}
+                </span>
+
+                <!-- User Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-light btn-sm dropdown-toggle rounded-pill px-3"
+                            type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa-solid fa-circle-user me-1"></i>
+                        <span class="d-none d-sm-inline">{{ current_user.username }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 rounded-3"
+                        aria-labelledby="userMenu" style="min-width:200px;">
+                        <li class="px-3 py-2 border-bottom">
+                            <div class="fw-bold text-dark small">{{ current_user.username }}</div>
+                            <div class="text-muted" style="font-size:0.75rem;">{{ current_user.email }}</div>
+                        </li>
+                        <li>
+                            <a class="dropdown-item py-2"
+                               href="{% if current_user.role == 'STUDENT' %}{{ url_for('student.profile') }}{% elif current_user.role == 'LIBRARIAN' %}{{ url_for('librarian.profile') }}{% else %}{{ url_for('admin.profile') }}{% endif %}">
+                                <i class="fa-solid fa-id-card me-2 text-primary"></i> My Profile
+                            </a>
+                        </li>
+                        {% if current_user.role == 'STUDENT' %}
+                        <li>
+                            <a class="dropdown-item py-2" href="{{ url_for('student.digital_card') }}">
+                                <i class="fa-solid fa-credit-card me-2 text-teal-600" style="color:#0D9488;"></i> Digital Library Card
+                            </a>
+                        </li>
+                        {% endif %}
+                        <li>
+                            <a class="dropdown-item py-2" href="{{ url_for('auth.change_password') }}">
+                                <i class="fa-solid fa-key me-2 text-warning"></i> Change Password
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li>
+                            <a class="dropdown-item py-2 text-danger fw-semibold"
+                               href="{{ url_for('auth.logout') }}"
+                               onclick="return confirm('Are you sure you want to logout?')">
+                                <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> Log Out
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-sm rounded-pill px-3">
+                    <i class="fa-solid fa-right-to-bracket me-1"></i> Log In
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</nav>

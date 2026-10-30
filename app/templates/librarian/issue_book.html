@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Issue Book Copy - KIOT Central Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card card-custom p-4 shadow-sm border-0 rounded-4 mb-4">
+                <h4 class="fw-bold text-navy mb-3"><i class="fa-solid fa-hand-holding-hand text-primary me-2"></i>Direct Book Issue Terminal</h4>
+
+                <!-- QR Scanner Quick Input -->
+                <div class="p-3 bg-light rounded-3 mb-4 border">
+                    <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-navy mb-2">
+                        <i class="fa-solid fa-qrcode text-primary me-1"></i> Scan or Paste QR Code / Access Code
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="fa-solid fa-barcode"></i></span>
+                        <input type="text" id="qrScanInput" class="form-control" placeholder="Scan Student Card QR (e.g. SMART_LIB_CARD:LIB-STD-2K24CSE003) or Copy QR...">
+                        <button type="button" onclick="handleScanResolve()" class="btn btn-navy text-white fw-semibold">
+                            <i class="fa-solid fa-magnifying-glass me-1"></i> Resolve QR
+                        </button>
+                    </div>
+                    <div id="scanFeedback" class="small mt-2" style="display:none;"></div>
+                </div>
+
+                <form method="POST" action="{{ url_for('librarian.issue_book') }}">
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">1. Select Student</label>
+                        <select id="studentSelect" name="student_id" class="form-select" required>
+                            <option value="" disabled selected>Search / Select Student...</option>
+                            {% for st in students %}
+                                <option value="{{ st.id }}" data-card="{{ st.library_card_number }}" data-roll="{{ st.student_id }}">
+                                    {{ st.name }} ({{ st.student_id }}) — Dept: {{ st.department.code }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label font-monospace fs-7 text-uppercase fw-bold text-muted">2. Select Available Physical Copy</label>
+                        <select id="copySelect" name="copy_id" class="form-select" required>
+                            <option value="" disabled selected>Search / Select Available Book Copy...</option>
+                            {% for cp in copies %}
+                                <option value="{{ cp.id }}" data-code="{{ cp.copy_code }}">
+                                    {{ cp.copy_code }} — {{ cp.book.title }} (ISBN: {{ cp.book.isbn }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2.5 fw-semibold rounded-3 shadow-sm">
+                        <i class="fa-solid fa-check-circle me-2"></i>Confirm Issue & Generate Loan Record
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function handleScanResolve() {
+    const qrVal = document.getElementById('qrScanInput').value.trim();
+    const feedback = document.getElementById('scanFeedback');
+    if (!qrVal) return;
+
+    fetch('/api/qr/resolve', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({qr_data: qrVal})
+    })
+    .then(r => r.json())
+    .then(data => {
+        feedback.style.display = 'block';
+        if (data.status === 'success') {
+            if (data.type === 'student') {
+                document.getElementById('studentSelect').value = data.student_id;
+                feedback.className = 'small mt-2 text-success fw-bold';
+                feedback.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i> Selected Student: ${data.name} (${data.roll_no})`;
+            } else if (data.type === 'copy') {
+                document.getElementById('copySelect').value = data.copy_id;
+                feedback.className = 'small mt-2 text-success fw-bold';
+                feedback.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i> Selected Copy: ${data.copy_code} (${data.book_title})`;
+            }
+        } else {
+            feedback.className = 'small mt-2 text-danger fw-bold';
+            feedback.innerHTML = `<i class="fa-solid fa-circle-xmark me-1"></i> ${data.message}`;
+        }
+    })
+    .catch(err => {
+        feedback.style.display = 'block';
+        feedback.className = 'small mt-2 text-danger fw-bold';
+        feedback.innerHTML = `<i class="fa-solid fa-circle-xmark me-1"></i> Failed to resolve QR code.`;
+    });
+}
+</script>
+{% endblock %}

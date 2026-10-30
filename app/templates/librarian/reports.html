@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Reports & Exports Center — KIOT Central Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1 text-navy"><i class="fa-solid fa-file-export text-primary me-2"></i>Reports & Exports Center</h3>
+            <p class="text-muted mb-0">KIOT Central Library — 13 Audit, Circulation & Inventory Report Export Engines</p>
+        </div>
+        <span class="badge bg-navy text-white font-monospace p-2">PDF (ReportLab) & Excel (OpenPyXL) Exports</span>
+    </div>
+
+    {% set report_cards = [
+        ('inventory', 'fa-boxes-stacked', 'Catalog Inventory Master', 'Complete list of 500 catalog titles, ISBN, authors, categories, copy counts, and locations.', 'text-primary'),
+        ('circulation', 'fa-rotate', 'Active Circulation & Borrowings', 'Current active borrowings, issued copies, borrower roll numbers, due dates, and statuses.', 'text-success'),
+        ('overdue', 'fa-triangle-exclamation', 'Overdue Loans & Fine Audit', 'Audit report of overdue books, student names, roll numbers, days overdue, and fine balances.', 'text-danger'),
+        ('department', 'fa-building-columns', 'Department-Wise Distribution', 'Borrowing activity, registered student counts, and total fines breakdown per engineering department.', 'text-info'),
+        ('copy_condition', 'fa-shield-halved', 'Book Copy Condition Audit', 'Physical copy conditions (Excellent, Good, Fair, Damaged) and individual Access Numbers.', 'text-warning'),
+        ('locations', 'fa-map-location-dot', 'Shelf Location Hierarchy', 'Mapping of 360 physical locations (Block, Floor, Section, Rack, Shelf, Position).', 'text-secondary'),
+        ('categories', 'fa-layer-group', 'Category & Subject Catalog', 'Distribution of book titles and physical copies across categories and subjects.', 'text-dark'),
+        ('students', 'fa-id-card', 'Student ID & Eligibility Audit', 'Master record of 66 KIOT students, Roll Numbers, Reg Numbers, card IDs, and borrow limits.', 'text-primary'),
+        ('popular', 'fa-fire', 'Most Popular / High Circulation', 'Top 50 most borrowed titles in KIOT Central Library based on historical borrowing volume.', 'text-danger'),
+        ('ml_demand', 'fa-brain', 'ML Demand Predictions', 'Machine Learning predictions for next month\'s borrowing demand per book title.', 'text-purple'),
+        ('wishlist', 'fa-heart', 'Wishlist & Unfulfilled Demand', 'Student wishlists and pending book issue requests awaiting physical copy addition.', 'text-danger'),
+        ('audit_logs', 'fa-clock-rotate-left', 'System Audit & Activity Logs', 'Complete audit trail of system operations, user logins, book issues, and admin edits.', 'text-secondary'),
+        ('master', 'fa-database', 'Master Database Backup Export', 'Complete structural database export containing all students, books, and circulation records.', 'text-navy')
+    ] %}
+
+    <div class="row g-4">
+        {% for key, icon, name, desc, color in report_cards %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card card-custom p-4 shadow-sm border-0 h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-3 p-3 bg-light me-3">
+                            <i class="fa-solid {{ icon }} {{ color }} fs-3"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold text-navy mb-1">{{ name }}</h5>
+                        </div>
+                    </div>
+                    <p class="text-muted small mb-3">{{ desc }}</p>
+                </div>
+
+                <div class="d-flex gap-2 pt-2 border-top">
+                    {% if key != 'master' %}
+                    <a href="{{ url_for('librarian.export_report', report_type=key, fmt='pdf') }}" class="btn btn-outline-danger btn-sm rounded-pill flex-fill">
+                        <i class="fa-solid fa-file-pdf me-1"></i> PDF
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('librarian.export_report', report_type=key, fmt='excel') }}" class="btn btn-outline-success btn-sm rounded-pill flex-fill">
+                        <i class="fa-solid fa-file-excel me-1"></i> Excel (.xlsx)
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
